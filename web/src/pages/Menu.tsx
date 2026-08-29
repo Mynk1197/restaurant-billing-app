@@ -134,7 +134,8 @@ export default function Menu() {
                 <input
                   value={form.Name}
                   onChange={(e) => setForm({ ...form, Name: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800"
+                  disabled={saving}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
                 />
               </label>
               <label className="text-xs text-gray-500">
@@ -142,7 +143,8 @@ export default function Menu() {
                 <select
                   value={form.Category}
                   onChange={(e) => setForm({ ...form, Category: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800"
+                  disabled={saving}
+                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
                 >
                   <option value="" disabled>
                     Select a category
@@ -161,12 +163,17 @@ export default function Menu() {
                   inputMode="decimal"
                   value={form.Price}
                   onChange={(e) => setForm({ ...form, Price: e.target.value })}
-                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800"
+                  disabled={saving}
+                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
                 />
               </label>
             </div>
             <div className="mt-4 flex gap-2">
-              <button onClick={() => setShowForm(false)} className="flex-1 rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-600">
+              <button
+                onClick={() => setShowForm(false)}
+                disabled={saving}
+                className="flex-1 rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-600 disabled:opacity-40"
+              >
                 Cancel
               </button>
               <button
