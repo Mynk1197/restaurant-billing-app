@@ -27,6 +27,15 @@ button {
   font-family: inherit;
 }
 
+/* iOS Safari/Chrome auto-zoom the page on focus if an input's font size is
+   under 16px -- overrides Tailwind's text-sm (14px) used on form fields
+   throughout the app so focusing them doesn't trigger that zoom. */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
