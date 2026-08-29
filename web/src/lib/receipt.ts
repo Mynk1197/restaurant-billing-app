@@ -82,7 +82,7 @@ export function buildReceiptPdf(bill: Bill): jsPDF {
   doc.text(`Time : ${formatTimeOnly(bill.dateTime)}`, width - margin, y, { align: 'right' })
   y += 12
   if (bill.customerName) {
-    doc.text(String(bill.customerName), margin, y)
+    doc.text(`Customer : ${String(bill.customerName)}`, margin, y)
     y += 12
   }
   doc.text(`Receipt No.: ${bill.billNo}`, margin, y)

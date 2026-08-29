@@ -14,7 +14,7 @@ export function formatDateOnly(iso: string): string {
 
 export function formatTimeOnly(iso: string): string {
   const d = new Date(iso)
-  return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+  return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
 }
 
 export function digitsOnly(phone: string | number): string {
