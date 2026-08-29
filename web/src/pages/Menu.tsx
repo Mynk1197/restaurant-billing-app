@@ -8,8 +8,8 @@ const CATEGORY_OPTIONS = [
   'Starter (Veg)',
   'Starter (Non-Veg)',
   'Soups & Salads',
-  'Main Courses (Veg)',
-  'Main Courses (Non-Veg)',
+  'Main Course (Veg)',
+  'Main Course (Non-Veg)',
   'Dessert',
   'Beverage',
 ]
@@ -158,6 +158,7 @@ export default function Menu() {
                 Price <span className="text-rose-500">*</span>
                 <input
                   type="number"
+                  inputMode="decimal"
                   value={form.Price}
                   onChange={(e) => setForm({ ...form, Price: e.target.value })}
                   className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800"
