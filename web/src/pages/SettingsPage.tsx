@@ -59,29 +59,35 @@ export default function SettingsPage() {
       <div className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-400">Restaurant details</h2>
         <div className="flex flex-col gap-2">
-          <input
-            value={form.RestaurantName}
-            onChange={(e) => update({ RestaurantName: e.target.value })}
-            placeholder="Restaurant name"
-            disabled={saving}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400"
-          />
-          <input
-            value={form.Address}
-            onChange={(e) => update({ Address: e.target.value })}
-            placeholder="Address"
-            disabled={saving}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400"
-          />
-          <input
-            value={form.Phone}
-            onChange={(e) => update({ Phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-            placeholder="Phone (10 digits)"
-            inputMode="numeric"
-            maxLength={10}
-            disabled={saving}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400"
-          />
+          <label className="text-xs text-gray-500">
+            Restaurant name <span className="text-rose-500">*</span>
+            <input
+              value={form.RestaurantName}
+              onChange={(e) => update({ RestaurantName: e.target.value })}
+              disabled={saving}
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
+            />
+          </label>
+          <label className="text-xs text-gray-500">
+            Address <span className="text-rose-500">*</span>
+            <input
+              value={form.Address}
+              onChange={(e) => update({ Address: e.target.value })}
+              disabled={saving}
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
+            />
+          </label>
+          <label className="text-xs text-gray-500">
+            Phone (10 digits) <span className="text-rose-500">*</span>
+            <input
+              value={form.Phone}
+              onChange={(e) => update({ Phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+              inputMode="numeric"
+              maxLength={10}
+              disabled={saving}
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
+            />
+          </label>
         </div>
       </div>
 
@@ -89,23 +95,23 @@ export default function SettingsPage() {
         <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-400">GST rates</h2>
         <div className="grid grid-cols-2 gap-2">
           <label className="text-xs text-gray-500">
-            SGST %
+            SGST % <span className="text-rose-500">*</span>
             <input
               type="number"
               value={form.SGSTRate}
               onChange={(e) => update({ SGSTRate: e.target.value })}
               disabled={saving}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
             />
           </label>
           <label className="text-xs text-gray-500">
-            CGST %
+            CGST % <span className="text-rose-500">*</span>
             <input
               type="number"
               value={form.CGSTRate}
               onChange={(e) => update({ CGSTRate: e.target.value })}
               disabled={saving}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-400"
+              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
             />
           </label>
         </div>
