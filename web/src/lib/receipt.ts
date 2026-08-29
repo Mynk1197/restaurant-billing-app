@@ -10,120 +10,86 @@ function money(n: number): string {
   return `Rs. ${n.toFixed(2)}`
 }
 
-const ACCENT: [number, number, number] = [234, 88, 12] // matches the app's orange theme
-const INK: [number, number, number] = [31, 41, 55]
-const MUTED: [number, number, number] = [107, 114, 128]
-const DIVIDER: [number, number, number] = [220, 220, 220]
-const PANEL: [number, number, number] = [248, 248, 248]
-
 export function buildReceiptPdf(bill: Bill): jsPDF {
-  const doc = new jsPDF({ unit: 'pt', format: [280, 460 + bill.items.length * 16] })
+  const doc = new jsPDF({ unit: 'pt', format: [280, 400 + bill.items.length * 16] })
   const width = doc.internal.pageSize.getWidth()
   const center = width / 2
-  const margin = 18
-  let y = 0
+  let y = 24
 
   // Settings/bill fields that look numeric (e.g. a phone number typed as
   // digits) come back from Google Sheets as actual JS numbers, not strings —
   // jsPDF's text() throws if given anything but a string, so every value it
   // renders is coerced here rather than trusted to already be a string.
-  const headerHeight = bill.address || bill.phone ? 56 : 42
-  doc.setFillColor(...ACCENT)
-  doc.rect(0, 0, width, headerHeight, 'F')
-  doc.setTextColor(255, 255, 255)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(14)
-  doc.text(String(bill.restaurantName || 'Restaurant'), center, 22, { align: 'center' })
+  doc.setFontSize(13)
+  doc.text(String(bill.restaurantName || 'Restaurant'), center, y, { align: 'center' })
+  y += 16
 
   doc.setFont('helvetica', 'normal')
-  doc.setFontSize(7.5)
-  const contactLine = [bill.address, bill.phone].filter(Boolean).map(String).join('  ·  ')
-  if (contactLine) doc.text(contactLine, center, 36, { align: 'center', maxWidth: width - margin * 2 })
-
-  y = headerHeight + 18
-
-  doc.setTextColor(...INK)
-  doc.setFontSize(8.5)
-  doc.setFont('helvetica', 'bold')
-  doc.text(`Bill #${bill.billNo}`, margin, y)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(...MUTED)
-  doc.text(formatDateTime(bill.dateTime), width - margin, y, { align: 'right' })
-  y += 13
-  if (bill.customerName) {
-    doc.setTextColor(...INK)
-    doc.text(`Customer: ${String(bill.customerName)}`, margin, y)
-    y += 13
+  doc.setFontSize(8)
+  if (bill.address) {
+    doc.text(String(bill.address), center, y, { align: 'center' })
+    y += 11
+  }
+  if (bill.phone) {
+    doc.text(String(bill.phone), center, y, { align: 'center' })
+    y += 11
   }
 
-  y += 6
-  doc.setDrawColor(...DIVIDER)
-  doc.line(margin, y, width - margin, y)
-  y += 16
+  y += 4
+  doc.setLineDashPattern([1, 1], 0)
+  doc.line(16, y, width - 16, y)
+  y += 14
 
-  doc.setFillColor(...PANEL)
-  doc.rect(margin, y - 10, width - margin * 2, 16, 'F')
+  doc.setFontSize(8.5)
+  doc.text(`Bill #${bill.billNo}`, 16, y)
+  doc.text(formatDateTime(bill.dateTime), width - 16, y, { align: 'right' })
+  y += 12
+  if (bill.customerName) {
+    doc.text(`Customer: ${String(bill.customerName)}`, 16, y)
+    y += 12
+  }
+  y += 4
+  doc.line(16, y, width - 16, y)
+  y += 14
+
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
-  doc.setTextColor(...INK)
-  doc.text('ITEM', margin + 4, y)
-  doc.text('QTY', width - 108, y, { align: 'right' })
-  doc.text('AMOUNT', width - margin - 4, y, { align: 'right' })
+  doc.text('Item', 16, y)
+  doc.text('Qty', width - 110, y, { align: 'right' })
+  doc.text('Amount', width - 16, y, { align: 'right' })
   doc.setFont('helvetica', 'normal')
-  y += 18
+  y += 12
 
   bill.items.forEach((item) => {
-    doc.setTextColor(...INK)
-    doc.text(String(item.name), margin + 4, y, { maxWidth: width - 140 })
-    doc.setTextColor(...MUTED)
-    doc.text(String(item.qty), width - 108, y, { align: 'right' })
-    doc.setTextColor(...INK)
-    doc.text(money(item.lineTotal), width - margin - 4, y, { align: 'right' })
-    y += 15
+    doc.text(String(item.name), 16, y, { maxWidth: width - 140 })
+    doc.text(String(item.qty), width - 110, y, { align: 'right' })
+    doc.text(money(item.lineTotal), width - 16, y, { align: 'right' })
+    y += 14
   })
 
-  y += 4
-  doc.setDrawColor(...DIVIDER)
-  doc.line(margin, y, width - margin, y)
-  y += 16
+  y += 2
+  doc.line(16, y, width - 16, y)
+  y += 14
 
   const row = (label: string, value: string, bold = false) => {
     doc.setFont('helvetica', bold ? 'bold' : 'normal')
-    doc.setFontSize(bold ? 10 : 8.5)
-    doc.setTextColor(bold ? INK[0] : MUTED[0], bold ? INK[1] : MUTED[1], bold ? INK[2] : MUTED[2])
-    doc.text(label, margin, y)
-    doc.setTextColor(...INK)
-    doc.text(value, width - margin, y, { align: 'right' })
-    y += bold ? 17 : 14
+    doc.text(label, 16, y)
+    doc.text(value, width - 16, y, { align: 'right' })
+    y += 13
   }
   row('Subtotal', money(bill.subtotal))
   if (bill.discount > 0) row('Discount', `-${money(bill.discount)}`)
   row('SGST', money(bill.sgst))
   row('CGST', money(bill.cgst))
-  y += 3
-  doc.setDrawColor(...ACCENT)
-  doc.setLineWidth(1.2)
-  doc.line(margin, y, width - margin, y)
-  doc.setLineWidth(0.4)
-  y += 17
+  y += 2
+  doc.line(16, y, width - 16, y)
+  y += 14
   row('Total', money(bill.total), true)
-  doc.setFontSize(8.5)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(...MUTED)
-  doc.text('Payment', margin, y)
-  doc.setTextColor(...INK)
-  doc.text(String(bill.paymentMethod), width - margin, y, { align: 'right' })
-  y += 22
+  row('Payment', String(bill.paymentMethod))
 
-  doc.setDrawColor(...ACCENT)
-  doc.setLineWidth(2)
-  doc.line(margin, y, width - margin, y)
-  doc.setLineWidth(0.4)
-  y += 16
-
+  y += 10
   doc.setFont('helvetica', 'italic')
   doc.setFontSize(8)
-  doc.setTextColor(...MUTED)
   doc.text('Thank you, visit again!', center, y, { align: 'center' })
 
   return doc
