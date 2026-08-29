@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 import { api, type Bill } from '../api/api'
 import { formatCurrency, formatDateTime } from '../lib/format'
-import { sendBillToWhatsApp, downloadBillPdf } from '../lib/receipt'
+import { openWhatsAppChat, downloadBillPdf } from '../lib/receipt'
 import { IconWhatsApp, IconDownload } from '../components/icons'
 
 export default function BillView() {
@@ -11,6 +11,7 @@ export default function BillView() {
   const [bill, setBill] = useState<Bill | null>((location.state as { bill?: Bill } | null)?.bill ?? null)
   const [loading, setLoading] = useState(!bill)
   const [error, setError] = useState<string | null>(null)
+  const [pdfSaved, setPdfSaved] = useState(false)
 
   useEffect(() => {
     if (bill || !billNo) return
@@ -25,14 +26,26 @@ export default function BillView() {
   if (loading) return <p className="px-4 py-8 text-center text-sm text-gray-400">Loading bill…</p>
   if (!bill) return <p className="px-4 py-8 text-center text-sm text-gray-400">Bill not found.</p>
 
-  function handleSend() {
+  function handleDownload() {
     if (!bill) return
     setError(null)
     try {
-      sendBillToWhatsApp(bill)
+      downloadBillPdf(bill)
+      setPdfSaved(true)
     } catch (err) {
       console.error(err)
-      setError(err instanceof Error ? `Couldn't send: ${err.message}` : "Couldn't send the bill.")
+      setError(err instanceof Error ? `Couldn't download: ${err.message}` : "Couldn't download the PDF.")
+    }
+  }
+
+  function handleOpenChat() {
+    if (!bill) return
+    setError(null)
+    try {
+      openWhatsAppChat(bill)
+    } catch (err) {
+      console.error(err)
+      setError(err instanceof Error ? `Couldn't open WhatsApp: ${err.message}` : "Couldn't open WhatsApp.")
     }
   }
 
@@ -94,28 +107,29 @@ export default function BillView() {
 
       {error && <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs font-medium text-rose-600">{error}</p>}
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-col gap-2">
         <button
-          onClick={handleSend}
-          disabled={!bill.customerPhone}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-bold text-white disabled:opacity-40"
-        >
-          <IconWhatsApp className="h-4 w-4" />
-          Send on WhatsApp
-        </button>
-        <button
-          onClick={() => bill && downloadBillPdf(bill)}
-          className="flex items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-3 text-sm font-semibold text-gray-600"
+          onClick={handleDownload}
+          className="flex items-center justify-center gap-2 rounded-xl bg-gray-100 py-3 text-sm font-semibold text-gray-600"
         >
           <IconDownload className="h-4 w-4" />
+          {pdfSaved ? 'PDF downloaded — tap again to re-download' : '1. Download Bill PDF'}
+        </button>
+        <button
+          onClick={handleOpenChat}
+          disabled={!bill.customerPhone || !pdfSaved}
+          className="flex items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-bold text-white disabled:opacity-40"
+        >
+          <IconWhatsApp className="h-4 w-4" />
+          2. Open WhatsApp Chat
         </button>
       </div>
       {!bill.customerPhone && <p className="mt-2 text-center text-xs text-gray-400">Add a WhatsApp number to enable sending.</p>}
-      {bill.customerPhone && (
-        <p className="mt-2 text-center text-xs text-gray-400">
-          Opens the customer's chat directly and downloads the PDF — attach it in that chat with one tap; WhatsApp can't auto-attach a
-          file to a specific contact without its paid Business API.
-        </p>
+      {bill.customerPhone && !pdfSaved && (
+        <p className="mt-2 text-center text-xs text-gray-400">Download the PDF first, then open the chat and attach it — WhatsApp can't auto-attach a file to a specific contact without its paid Business API.</p>
+      )}
+      {bill.customerPhone && pdfSaved && (
+        <p className="mt-2 text-center text-xs text-gray-400">Now open the chat and attach the downloaded PDF from your Downloads.</p>
       )}
     </div>
   )

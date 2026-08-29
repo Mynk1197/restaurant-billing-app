@@ -99,16 +99,13 @@ export function whatsAppMessage(bill: Bill): string {
 // contact AND attach a file -- that combination only exists behind
 // WhatsApp's paid Business API. So instead of the OS share sheet (which
 // hands off to WhatsApp's own contact picker, losing the number the
-// customer typed in), this opens the customer's exact chat directly via
-// wa.me and downloads the PDF alongside it for staff to attach manually
-// with one tap inside that already-open chat.
-export function sendBillToWhatsApp(bill: Bill) {
-  // Trigger the download before opening WhatsApp, not after: browsers give
-  // no JS event for "the user finished the save dialog", so this can't
-  // truly wait for that -- but downloading first at least means the
-  // save prompt has a chance to appear before the tab switches away,
-  // instead of racing it.
-  downloadBillPdf(bill)
+// customer typed in), the flow is two explicit, separately-tapped steps:
+// download the PDF, then open the customer's exact chat via wa.me for
+// staff to attach it manually. Chaining these automatically doesn't work
+// on iOS -- opening a new tab steals focus immediately, and there's no
+// JS event for "the user finished the save prompt" to wait for -- so the
+// second step only happens on its own explicit tap.
+export function openWhatsAppChat(bill: Bill) {
   const phone = digitsOnly(bill.customerPhone)
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(whatsAppMessage(bill))}`
   window.open(url, '_blank', 'noopener')
