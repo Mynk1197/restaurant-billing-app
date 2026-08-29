@@ -103,15 +103,15 @@ export function whatsAppMessage(bill: Bill): string {
 // wa.me and downloads the PDF alongside it for staff to attach manually
 // with one tap inside that already-open chat.
 export function sendBillToWhatsApp(bill: Bill) {
-  // Navigating the current tab (location.href) at the same instant as
-  // triggering a file download makes some mobile browsers drop one of the
-  // two actions -- opening WhatsApp in a new tab instead keeps the app's
-  // own tab in place for the download and doesn't get popup-blocked here
-  // since it's still a direct, synchronous result of the tap.
+  // Trigger the download before opening WhatsApp, not after: browsers give
+  // no JS event for "the user finished the save dialog", so this can't
+  // truly wait for that -- but downloading first at least means the
+  // save prompt has a chance to appear before the tab switches away,
+  // instead of racing it.
+  downloadBillPdf(bill)
   const phone = digitsOnly(bill.customerPhone)
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(whatsAppMessage(bill))}`
   window.open(url, '_blank', 'noopener')
-  downloadBillPdf(bill)
 }
 
 export function downloadBillPdf(bill: Bill) {
