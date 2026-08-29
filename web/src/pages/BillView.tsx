@@ -110,7 +110,7 @@ export default function BillView() {
       <div className="mt-4 flex flex-col gap-2">
         <button
           onClick={handleDownload}
-          className="flex items-center justify-center gap-2 rounded-xl bg-gray-100 py-3 text-sm font-semibold text-gray-600"
+          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white"
         >
           <IconDownload className="h-4 w-4" />
           {pdfSaved ? 'PDF downloaded — tap again to re-download' : '1. Download Bill PDF'}
