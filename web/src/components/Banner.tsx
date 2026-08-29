@@ -13,7 +13,11 @@ export default function Banner({ tone, children }: { tone: 'success' | 'error'; 
   const ref = useRef<HTMLParagraphElement>(null)
 
   useEffect(() => {
-    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    // 'nearest' skips scrolling if the browser judges the element already
+    // partially visible, which came out wrong right after this banner's own
+    // mount shifted the page layout. 'start' always aligns it to the top of
+    // the scroll area, so it's guaranteed visible regardless of that.
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [])
 
   return (
