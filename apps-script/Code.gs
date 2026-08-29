@@ -138,6 +138,21 @@ function appendRow(name, headers, obj) {
   sh.appendRow(row);
 }
 
+// Apps Script's setValue/appendRow silently converts a numeric-looking
+// string (e.g. a phone number typed as plain digits) into a real Number
+// cell, same as it does for date-looking strings. That breaks anything
+// downstream expecting a string (jsPDF's text renderer throws on a
+// number). Forcing the cell to plain-text format before writing keeps it
+// stored exactly as the string that was sent.
+function forceCellAsText(name, headers, rowIdx, columnHeader, value) {
+  if (rowIdx < 0 || value === undefined || value === null || value === '') return;
+  var sh = getSheet(name);
+  var col = headers.indexOf(columnHeader) + 1;
+  var cell = sh.getRange(rowIdx, col);
+  cell.setNumberFormat('@');
+  cell.setValue(String(value));
+}
+
 function findRowIndexByKey(name, headers, keyHeader, keyValue) {
   var sh = getSheet(name);
   var lastRow = sh.getLastRow();
@@ -198,9 +213,9 @@ function setSettingValue(key, value) {
   var sh = getSheet(SHEET_SETTINGS);
   if (rowIdx < 0) {
     sh.appendRow([key, value]);
-  } else {
-    sh.getRange(rowIdx, 2).setValue(value);
+    rowIdx = sh.getLastRow();
   }
+  forceCellAsText(SHEET_SETTINGS, SETTINGS_HEADERS, rowIdx, 'Value', value);
 }
 
 function saveSettings(params) {
@@ -254,6 +269,7 @@ function createBill(params) {
     ItemsJSON: JSON.stringify(lineItems)
   };
   appendRow(SHEET_BILLS, BILLS_HEADERS, bill);
+  forceCellAsText(SHEET_BILLS, BILLS_HEADERS, getSheet(SHEET_BILLS).getLastRow(), 'CustomerPhone', bill.CustomerPhone);
 
   return {
     billNo: billNo,

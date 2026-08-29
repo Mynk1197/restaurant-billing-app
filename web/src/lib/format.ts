@@ -7,6 +7,6 @@ export function formatDateTime(iso: string): string {
   return d.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
 }
 
-export function digitsOnly(phone: string): string {
-  return phone.replace(/\D/g, '')
+export function digitsOnly(phone: string | number): string {
+  return String(phone).replace(/\D/g, '')
 }

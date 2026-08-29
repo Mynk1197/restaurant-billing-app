@@ -8,19 +8,23 @@ export function buildReceiptPdf(bill: Bill): jsPDF {
   const center = width / 2
   let y = 24
 
+  // Settings/bill fields that look numeric (e.g. a phone number typed as
+  // digits) come back from Google Sheets as actual JS numbers, not strings —
+  // jsPDF's text() throws if given anything but a string, so every value it
+  // renders is coerced here rather than trusted to already be a string.
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(13)
-  doc.text(bill.restaurantName || 'Restaurant', center, y, { align: 'center' })
+  doc.text(String(bill.restaurantName || 'Restaurant'), center, y, { align: 'center' })
   y += 16
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
   if (bill.address) {
-    doc.text(bill.address, center, y, { align: 'center' })
+    doc.text(String(bill.address), center, y, { align: 'center' })
     y += 11
   }
   if (bill.phone) {
-    doc.text(bill.phone, center, y, { align: 'center' })
+    doc.text(String(bill.phone), center, y, { align: 'center' })
     y += 11
   }
 
@@ -34,7 +38,7 @@ export function buildReceiptPdf(bill: Bill): jsPDF {
   doc.text(formatDateTime(bill.dateTime), width - 16, y, { align: 'right' })
   y += 12
   if (bill.customerName) {
-    doc.text(`Customer: ${bill.customerName}`, 16, y)
+    doc.text(`Customer: ${String(bill.customerName)}`, 16, y)
     y += 12
   }
   y += 4
@@ -49,7 +53,7 @@ export function buildReceiptPdf(bill: Bill): jsPDF {
   y += 12
 
   bill.items.forEach((item) => {
-    doc.text(item.name, 16, y, { maxWidth: width - 140 })
+    doc.text(String(item.name), 16, y, { maxWidth: width - 140 })
     doc.text(String(item.qty), width - 110, y, { align: 'right' })
     doc.text(formatCurrency(item.lineTotal), width - 16, y, { align: 'right' })
     y += 14
@@ -73,7 +77,7 @@ export function buildReceiptPdf(bill: Bill): jsPDF {
   doc.line(16, y, width - 16, y)
   y += 14
   row('Total', formatCurrency(bill.total), true)
-  row('Payment', bill.paymentMethod)
+  row('Payment', String(bill.paymentMethod))
 
   y += 10
   doc.setFont('helvetica', 'italic')
