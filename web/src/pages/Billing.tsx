@@ -52,7 +52,7 @@ export default function Billing() {
     () =>
       dishes
         .filter((d) => cart[d.Id] > 0)
-        .map((d) => ({ dishId: d.Id, name: d.Name, price: Number(d.Price), qty: cart[d.Id] })),
+        .map((d) => ({ dishId: d.Id, name: d.Name, category: d.Category, price: Number(d.Price), qty: cart[d.Id] })),
     [dishes, cart],
   )
 

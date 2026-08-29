@@ -1,34 +1,64 @@
 import jsPDF from 'jspdf'
 import type { Bill } from '../api/api'
-import { formatCurrency, formatDateTime, digitsOnly } from './format'
+import { formatCurrency, formatDateOnly, formatTimeOnly, digitsOnly } from './format'
+import { NOTO_SANS_REGULAR_BASE64, NOTO_SANS_BOLD_BASE64 } from './receiptFont'
 
 // jsPDF's built-in fonts (Helvetica etc.) don't include the ₹ glyph, so
-// doc.text() renders it as a broken box -- "Rs." is used here instead,
-// specifically for the PDF. The on-screen app keeps the real ₹ symbol
-// (formatCurrency in format.ts), since browsers render that fine.
-function money(n: number): string {
-  return `Rs. ${n.toFixed(2)}`
+// doc.text() rendered it as a broken box. Noto Sans does have it -- it's
+// registered per-document here (jsPDF fonts live on the document instance,
+// not globally) and used everywhere instead of Helvetica so the real ₹
+// symbol prints correctly, matching what the on-screen app already shows.
+function registerReceiptFont(doc: jsPDF) {
+  doc.addFileToVFS('NotoSans-Regular.ttf', NOTO_SANS_REGULAR_BASE64)
+  doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal')
+  doc.addFileToVFS('NotoSans-Bold.ttf', NOTO_SANS_BOLD_BASE64)
+  doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold')
+}
+
+// Groups by category in first-seen order, keeping items within a category
+// in the order they were added to the bill.
+function groupByCategory(items: Bill['items']): { category: string; items: Bill['items'] }[] {
+  const order: string[] = []
+  const groups = new Map<string, Bill['items']>()
+  items.forEach((item) => {
+    const key = item.category || 'Other'
+    if (!groups.has(key)) {
+      groups.set(key, [])
+      order.push(key)
+    }
+    groups.get(key)!.push(item)
+  })
+  return order.map((category) => ({ category, items: groups.get(category)! }))
 }
 
 export function buildReceiptPdf(bill: Bill): jsPDF {
-  const doc = new jsPDF({ unit: 'pt', format: [280, 400 + bill.items.length * 16] })
+  const doc = new jsPDF({ unit: 'pt', format: [300, 460 + bill.items.length * 16] })
+  registerReceiptFont(doc)
   const width = doc.internal.pageSize.getWidth()
   const center = width / 2
+  const margin = 16
+  const colQty = width - 150
+  const colPrice = width - 96
+  const colSub = width - margin
   let y = 24
 
   // Settings/bill fields that look numeric (e.g. a phone number typed as
   // digits) come back from Google Sheets as actual JS numbers, not strings —
   // jsPDF's text() throws if given anything but a string, so every value it
   // renders is coerced here rather than trusted to already be a string.
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(13)
-  doc.text(String(bill.restaurantName || 'Restaurant'), center, y, { align: 'center' })
+  doc.setFont('NotoSans', 'bold')
+  doc.setFontSize(14)
+  doc.text('WELCOME!!!', center, y, { align: 'center' })
   y += 16
 
-  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(12)
+  doc.text(String(bill.restaurantName || 'Restaurant'), center, y, { align: 'center' })
+  y += 14
+
+  doc.setFont('NotoSans', 'normal')
   doc.setFontSize(8)
   if (bill.address) {
-    doc.text(String(bill.address), center, y, { align: 'center' })
+    doc.text(String(bill.address), center, y, { align: 'center', maxWidth: width - margin * 2 })
     y += 11
   }
   if (bill.phone) {
@@ -37,58 +67,81 @@ export function buildReceiptPdf(bill: Bill): jsPDF {
   }
 
   y += 4
-  doc.setLineDashPattern([1, 1], 0)
-  doc.line(16, y, width - 16, y)
+  doc.line(margin, y, width - margin, y)
   y += 14
 
+  doc.setFont('NotoSans', 'bold')
+  doc.setFontSize(9)
+  doc.text('Original Receipt', center, y, { align: 'center' })
+  y += 14
+  doc.line(margin, y - 8, width - margin, y - 8)
+
+  doc.setFont('NotoSans', 'normal')
   doc.setFontSize(8.5)
-  doc.text(`Bill #${bill.billNo}`, 16, y)
-  doc.text(formatDateTime(bill.dateTime), width - 16, y, { align: 'right' })
+  doc.text(`Date : ${formatDateOnly(bill.dateTime)}`, margin, y)
+  doc.text(`Time : ${formatTimeOnly(bill.dateTime)}`, width - margin, y, { align: 'right' })
   y += 12
   if (bill.customerName) {
-    doc.text(`Customer: ${String(bill.customerName)}`, 16, y)
+    doc.text(String(bill.customerName), margin, y)
     y += 12
   }
-  y += 4
-  doc.line(16, y, width - 16, y)
-  y += 14
-
-  doc.setFont('helvetica', 'bold')
-  doc.text('Item', 16, y)
-  doc.text('Qty', width - 110, y, { align: 'right' })
-  doc.text('Amount', width - 16, y, { align: 'right' })
-  doc.setFont('helvetica', 'normal')
+  doc.text(`Receipt No.: ${bill.billNo}`, margin, y)
   y += 12
 
-  bill.items.forEach((item) => {
-    doc.text(String(item.name), 16, y, { maxWidth: width - 140 })
-    doc.text(String(item.qty), width - 110, y, { align: 'right' })
-    doc.text(money(item.lineTotal), width - 16, y, { align: 'right' })
-    y += 14
+  y += 2
+  doc.line(margin, y, width - margin, y)
+  y += 14
+
+  doc.setFont('NotoSans', 'bold')
+  doc.setFontSize(8)
+  doc.text('Description', margin, y)
+  doc.text('Qty', colQty, y, { align: 'right' })
+  doc.text('Price', colPrice, y, { align: 'right' })
+  doc.text('Subtotal', colSub, y, { align: 'right' })
+  y += 12
+
+  groupByCategory(bill.items).forEach(({ category, items }) => {
+    doc.setFont('NotoSans', 'bold')
+    doc.setFontSize(8.5)
+    doc.text(category.toUpperCase(), margin, y)
+    y += 13
+
+    doc.setFont('NotoSans', 'normal')
+    doc.setFontSize(8)
+    items.forEach((item) => {
+      doc.text(String(item.name), margin, y, { maxWidth: colQty - margin - 6 })
+      doc.text(String(item.qty), colQty, y, { align: 'right' })
+      doc.text(formatCurrency(item.price), colPrice, y, { align: 'right' })
+      doc.text(formatCurrency(item.lineTotal), colSub, y, { align: 'right' })
+      y += 13
+    })
   })
 
   y += 2
-  doc.line(16, y, width - 16, y)
+  doc.line(margin, y, width - margin, y)
   y += 14
 
   const row = (label: string, value: string, bold = false) => {
-    doc.setFont('helvetica', bold ? 'bold' : 'normal')
-    doc.text(label, 16, y)
-    doc.text(value, width - 16, y, { align: 'right' })
+    doc.setFont('NotoSans', bold ? 'bold' : 'normal')
+    doc.text(label, margin, y)
+    doc.text(value, width - margin, y, { align: 'right' })
     y += 13
   }
-  row('Subtotal', money(bill.subtotal))
-  if (bill.discount > 0) row('Discount', `-${money(bill.discount)}`)
-  row('SGST', money(bill.sgst))
-  row('CGST', money(bill.cgst))
+  row('Sub Total :', formatCurrency(bill.subtotal))
+  if (bill.discount > 0) row('Discount :', `-${formatCurrency(bill.discount)}`)
+  row(`CGST : ${bill.cgstRate ?? ''}%`.replace(' : %', ' :'), formatCurrency(bill.cgst))
+  row(`SGST : ${bill.sgstRate ?? ''}%`.replace(' : %', ' :'), formatCurrency(bill.sgst))
   y += 2
-  doc.line(16, y, width - 16, y)
+  doc.line(margin, y, width - margin, y)
   y += 14
-  row('Total', money(bill.total), true)
-  row('Payment', String(bill.paymentMethod))
+  row('Total :', formatCurrency(bill.total), true)
+  y += 4
+  row('Mode :', String(bill.paymentMethod))
 
-  y += 10
-  doc.setFont('helvetica', 'italic')
+  y += 8
+  doc.line(margin, y, width - margin, y)
+  y += 14
+  doc.setFont('NotoSans', 'normal')
   doc.setFontSize(8)
   doc.text('Thank you, visit again!', center, y, { align: 'center' })
 

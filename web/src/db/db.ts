@@ -5,7 +5,7 @@ export interface QueuedBill {
   id?: number
   customerName: string
   customerPhone: string
-  items: { dishId: string; name: string; price: number; qty: number }[]
+  items: { dishId: string; name: string; category: string; price: number; qty: number }[]
   discount: number
   paymentMethod: string
   createdAt: string

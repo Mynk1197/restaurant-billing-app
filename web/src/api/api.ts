@@ -68,6 +68,7 @@ export interface Settings {
 export interface BillLineItem {
   dishId: string
   name: string
+  category: string
   price: number
   qty: number
   lineTotal: number
@@ -112,7 +113,7 @@ export const api = {
   createBill: (payload: {
     customerName: string
     customerPhone: string
-    items: { dishId: string; name: string; price: number; qty: number }[]
+    items: { dishId: string; name: string; category: string; price: number; qty: number }[]
     discount: number
     paymentMethod: string
   }) =>

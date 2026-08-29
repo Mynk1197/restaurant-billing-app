@@ -243,7 +243,7 @@ function createBill(params) {
     var price = parseFloat(it.price) || 0;
     var lineTotal = qty * price;
     subtotal += lineTotal;
-    return { dishId: it.dishId, name: it.name, price: price, qty: qty, lineTotal: lineTotal };
+    return { dishId: it.dishId, name: it.name, category: it.category || '', price: price, qty: qty, lineTotal: lineTotal };
   });
 
   var taxableAmount = Math.max(subtotal - discount, 0);
