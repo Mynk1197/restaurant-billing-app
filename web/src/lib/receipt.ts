@@ -91,7 +91,7 @@ export function whatsAppMessage(bill: Bill): string {
   return `Hi ${bill.customerName || ''}, here's your bill #${bill.billNo} from ${bill.restaurantName} for ${formatCurrency(bill.total)}. Thank you!`
 }
 
-export async function shareBillOnWhatsApp(bill: Bill): Promise<'shared' | 'fallback'> {
+export async function shareBillOnWhatsApp(bill: Bill): Promise<'shared' | 'fallback' | 'cancelled'> {
   const doc = buildReceiptPdf(bill)
   const blob = doc.output('blob')
   const file = new File([blob], receiptFileName(bill), { type: 'application/pdf' })
@@ -100,14 +100,25 @@ export async function shareBillOnWhatsApp(bill: Bill): Promise<'shared' | 'fallb
     try {
       await navigator.share({ files: [file], text: whatsAppMessage(bill) })
       return 'shared'
-    } catch {
-      // user cancelled the share sheet or it failed — fall through to wa.me
+    } catch (err) {
+      // The user dismissing the share sheet also rejects this promise (as
+      // an AbortError) -- that's a deliberate "never mind", not a failure,
+      // so it should not be treated the same as the share actually breaking.
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return 'cancelled'
+      }
+      // fall through to the wa.me fallback below
     }
   }
 
   const phone = digitsOnly(bill.customerPhone)
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(whatsAppMessage(bill))}`
-  window.open(url, '_blank')
+  // window.open(..., '_blank') is unreliable here: once this runs after an
+  // `await` (the share attempt above), it's no longer tied closely enough
+  // to the tap for some mobile browsers' popup blockers, and it silently
+  // does nothing. Navigating the current tab is what wa.me integrations
+  // rely on, and it isn't blocked.
+  window.location.href = url
   return 'fallback'
 }
 

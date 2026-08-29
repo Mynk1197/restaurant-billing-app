@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "e-attendance-11033"
+  },
+  "targets": {
+    "e-attendance-11033": {
+      "hosting": {
+        "restaurant-billing": [
+          "restaurant-billing-11033"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

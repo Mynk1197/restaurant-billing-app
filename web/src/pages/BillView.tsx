@@ -35,6 +35,9 @@ export default function BillView() {
       if (result === 'fallback') {
         setShareNote("Opened WhatsApp with a text summary — PDF wasn't attached. Use Download PDF below to send it separately.")
       }
+    } catch (err) {
+      console.error(err)
+      setShareNote(err instanceof Error ? `Couldn't share: ${err.message}` : "Couldn't share the bill.")
     } finally {
       setSharing(false)
     }
