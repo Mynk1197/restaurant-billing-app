@@ -4,6 +4,7 @@ import { api, type Dish, type Settings } from '../api/api'
 import { db } from '../db/db'
 import { formatCurrency } from '../lib/format'
 import { IconMinus, IconPlus } from '../components/icons'
+import Banner from '../components/Banner'
 
 const PAYMENT_METHODS = ['Cash', 'Card', 'UPI']
 
@@ -107,7 +108,7 @@ export default function Billing() {
 
   return (
     <div className="flex flex-col gap-4 px-4 py-4">
-      {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs font-medium text-rose-600">{error}</p>}
+      {error && <Banner tone="error">{error}</Banner>}
 
       {categories.map(([category, items]) => (
         <div key={category}>

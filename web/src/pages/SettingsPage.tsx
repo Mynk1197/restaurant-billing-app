@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type Settings } from '../api/api'
-import { scrollContentToTop } from '../lib/scroll'
+import Banner from '../components/Banner'
 
 export default function SettingsPage() {
   const [form, setForm] = useState<Settings | null>(null)
@@ -11,10 +11,6 @@ export default function SettingsPage() {
   useEffect(() => {
     api.getSettings().then(setForm)
   }, [])
-
-  useEffect(() => {
-    if (saved || error) scrollContentToTop()
-  }, [saved, error])
 
   function update(fields: Partial<Settings>) {
     setForm((prev) => (prev ? { ...prev, ...fields } : prev))
@@ -54,12 +50,8 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
-      {saved && (
-        <p className="rounded-lg bg-green-50 px-3 py-2 text-sm font-semibold text-green-700">
-          ✓ Settings saved — your changes are live for the next bill.
-        </p>
-      )}
-      {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600">{error}</p>}
+      {saved && <Banner tone="success">✓ Settings saved — your changes are live for the next bill.</Banner>}
+      {error && <Banner tone="error">{error}</Banner>}
 
       <div className="rounded-2xl bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-400">Restaurant details</h2>

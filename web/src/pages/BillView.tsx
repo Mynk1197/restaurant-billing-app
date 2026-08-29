@@ -4,6 +4,7 @@ import { api, type Bill } from '../api/api'
 import { formatCurrency, formatDateTime } from '../lib/format'
 import { openWhatsAppChat, downloadBillPdf } from '../lib/receipt'
 import { IconWhatsApp, IconDownload } from '../components/icons'
+import Banner from '../components/Banner'
 
 export default function BillView() {
   const { billNo } = useParams()
@@ -105,7 +106,11 @@ export default function BillView() {
         </div>
       </div>
 
-      {error && <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs font-medium text-rose-600">{error}</p>}
+      {error && (
+        <div className="mt-3">
+          <Banner tone="error">{error}</Banner>
+        </div>
+      )}
 
       <div className="mt-4 flex flex-col gap-2">
         <button
