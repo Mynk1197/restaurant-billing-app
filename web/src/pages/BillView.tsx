@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 import { api, type Bill } from '../api/api'
 import { formatCurrency, formatDateTime } from '../lib/format'
-import { shareBillOnWhatsApp, downloadBillPdf } from '../lib/receipt'
+import { sendBillToWhatsApp, downloadBillPdf } from '../lib/receipt'
 import { IconWhatsApp, IconDownload } from '../components/icons'
 
 export default function BillView() {
@@ -10,8 +10,7 @@ export default function BillView() {
   const location = useLocation()
   const [bill, setBill] = useState<Bill | null>((location.state as { bill?: Bill } | null)?.bill ?? null)
   const [loading, setLoading] = useState(!bill)
-  const [shareNote, setShareNote] = useState<string | null>(null)
-  const [sharing, setSharing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (bill || !billNo) return
@@ -26,20 +25,14 @@ export default function BillView() {
   if (loading) return <p className="px-4 py-8 text-center text-sm text-gray-400">Loading bill…</p>
   if (!bill) return <p className="px-4 py-8 text-center text-sm text-gray-400">Bill not found.</p>
 
-  async function handleShare() {
+  function handleSend() {
     if (!bill) return
-    setSharing(true)
-    setShareNote(null)
+    setError(null)
     try {
-      const result = await shareBillOnWhatsApp(bill)
-      if (result === 'fallback') {
-        setShareNote("Opened WhatsApp with a text summary — PDF wasn't attached. Use Download PDF below to send it separately.")
-      }
+      sendBillToWhatsApp(bill)
     } catch (err) {
       console.error(err)
-      setShareNote(err instanceof Error ? `Couldn't share: ${err.message}` : "Couldn't share the bill.")
-    } finally {
-      setSharing(false)
+      setError(err instanceof Error ? `Couldn't send: ${err.message}` : "Couldn't send the bill.")
     }
   }
 
@@ -99,16 +92,16 @@ export default function BillView() {
         </div>
       </div>
 
-      {shareNote && <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">{shareNote}</p>}
+      {error && <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs font-medium text-rose-600">{error}</p>}
 
       <div className="mt-4 flex gap-2">
         <button
-          onClick={handleShare}
-          disabled={sharing || !bill.customerPhone}
+          onClick={handleSend}
+          disabled={!bill.customerPhone}
           className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-bold text-white disabled:opacity-40"
         >
           <IconWhatsApp className="h-4 w-4" />
-          {sharing ? 'Sharing…' : 'Share on WhatsApp'}
+          Send on WhatsApp
         </button>
         <button
           onClick={() => bill && downloadBillPdf(bill)}
@@ -117,7 +110,13 @@ export default function BillView() {
           <IconDownload className="h-4 w-4" />
         </button>
       </div>
-      {!bill.customerPhone && <p className="mt-2 text-center text-xs text-gray-400">Add a WhatsApp number to enable sharing.</p>}
+      {!bill.customerPhone && <p className="mt-2 text-center text-xs text-gray-400">Add a WhatsApp number to enable sending.</p>}
+      {bill.customerPhone && (
+        <p className="mt-2 text-center text-xs text-gray-400">
+          Opens the customer's chat directly and downloads the PDF — attach it in that chat with one tap; WhatsApp can't auto-attach a
+          file to a specific contact without its paid Business API.
+        </p>
+      )}
     </div>
   )
 }
