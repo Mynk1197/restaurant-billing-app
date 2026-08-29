@@ -105,10 +105,19 @@ export function whatsAppMessage(bill: Bill): string {
 // on iOS -- opening a new tab steals focus immediately, and there's no
 // JS event for "the user finished the save prompt" to wait for -- so the
 // second step only happens on its own explicit tap.
+// Tracks the WhatsApp tab this app itself opened, so a repeat tap (e.g.
+// switching to a different bill) can close the previous one first instead
+// of letting them pile up. Only ever refers to a tab this code opened --
+// 'noopener' isn't used here specifically so this reference is available.
+let lastWhatsAppTab: Window | null = null
+
 export function openWhatsAppChat(bill: Bill) {
+  if (lastWhatsAppTab && !lastWhatsAppTab.closed) {
+    lastWhatsAppTab.close()
+  }
   const phone = digitsOnly(bill.customerPhone)
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(whatsAppMessage(bill))}`
-  window.open(url, '_blank', 'noopener')
+  lastWhatsAppTab = window.open(url, '_blank')
 }
 
 export function downloadBillPdf(bill: Bill) {
