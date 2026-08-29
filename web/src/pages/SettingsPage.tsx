@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type Settings } from '../api/api'
+import { scrollContentToTop } from '../lib/scroll'
 
 export default function SettingsPage() {
   const [form, setForm] = useState<Settings | null>(null)
@@ -10,6 +11,10 @@ export default function SettingsPage() {
   useEffect(() => {
     api.getSettings().then(setForm)
   }, [])
+
+  useEffect(() => {
+    if (saved || error) scrollContentToTop()
+  }, [saved, error])
 
   function update(fields: Partial<Settings>) {
     setForm((prev) => (prev ? { ...prev, ...fields } : prev))
