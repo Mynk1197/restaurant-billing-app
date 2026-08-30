@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api, type Bill } from '../api/api'
 import { formatCurrency, formatDateTime } from '../lib/format'
 import { openWhatsAppChat, downloadBillPdf } from '../lib/receipt'
-import { IconWhatsApp, IconDownload } from '../components/icons'
+import { IconWhatsApp, IconDownload, IconCheck } from '../components/icons'
 import Banner from '../components/Banner'
 
 export default function BillView() {
   const { billNo } = useParams()
   const location = useLocation()
+  const navigate = useNavigate()
   const [bill, setBill] = useState<Bill | null>((location.state as { bill?: Bill } | null)?.bill ?? null)
   const [loading, setLoading] = useState(!bill)
   const [error, setError] = useState<string | null>(null)
   const [pdfSaved, setPdfSaved] = useState(false)
+  const [chatOpened, setChatOpened] = useState(false)
 
   useEffect(() => {
     if (bill || !billNo) return
@@ -44,10 +46,40 @@ export default function BillView() {
     setError(null)
     try {
       openWhatsAppChat(bill)
+      setChatOpened(true)
     } catch (err) {
       console.error(err)
       setError(err instanceof Error ? `Couldn't open WhatsApp: ${err.message}` : "Couldn't open WhatsApp.")
     }
+  }
+
+  // Opening WhatsApp is a fire-and-forget window.open -- there's no way to
+  // know whether the customer actually got the message, only that this app's
+  // part of the job (opening the right chat) is done. Replacing the receipt
+  // with this confirmation once that's happened, instead of just leaving the
+  // same page showing when staff switch back from WhatsApp, gives them a
+  // clear "done, next customer" action.
+  if (chatOpened && bill) {
+    return (
+      <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-600">
+          <IconCheck className="h-7 w-7" />
+        </div>
+        <h2 className="text-base font-bold text-gray-800">WhatsApp opened for Bill #{bill.billNo}</h2>
+        <p className="mt-1 max-w-xs text-sm text-gray-500">
+          Attach the downloaded PDF in that chat and send it, if you haven't already.
+        </p>
+        <button
+          onClick={() => navigate('/')}
+          className="mt-6 w-full max-w-xs rounded-xl bg-orange-600 py-3 text-sm font-bold text-white"
+        >
+          Close · Back to Billing
+        </button>
+        <button onClick={() => setChatOpened(false)} className="mt-3 text-xs font-medium text-gray-400">
+          View receipt again
+        </button>
+      </div>
+    )
   }
 
   return (
