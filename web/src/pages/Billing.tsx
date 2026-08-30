@@ -4,7 +4,7 @@ import { api, type Dish, type Settings } from '../api/api'
 import { db } from '../db/db'
 import { formatCurrency } from '../lib/format'
 import { CATEGORY_OPTIONS } from '../lib/categories'
-import { IconMinus, IconPlus, IconSearch } from '../components/icons'
+import { IconMinus, IconPlus, IconSearch, IconClose } from '../components/icons'
 import Banner from '../components/Banner'
 
 const PAYMENT_METHODS = ['Cash', 'Card', 'UPI']
@@ -240,7 +240,22 @@ export default function Billing() {
           }}
         >
           <div className="w-full max-w-md rounded-t-2xl bg-white p-5" onClick={(e) => e.stopPropagation()}>
-            <h3 className="mb-3 text-sm font-bold text-gray-800">Review Bill</h3>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-bold text-gray-800">Review Bill</h3>
+              <button
+                onClick={() => {
+                  if (submitting) return
+                  resetCart()
+                  setError(null)
+                  setShowCheckout(false)
+                }}
+                disabled={submitting}
+                aria-label="Clear cart and close"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-gray-500 disabled:opacity-40"
+              >
+                <IconClose className="h-4 w-4" />
+              </button>
+            </div>
             {error && (
               <div className="mb-3">
                 <Banner tone="error">{error}</Banner>
