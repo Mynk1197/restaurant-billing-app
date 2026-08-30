@@ -70,6 +70,13 @@ export default function Menu() {
       setError('Dish name, category, and price are all required.')
       return
     }
+    const duplicate = dishes.some(
+      (d) => d.Id !== form.Id && d.Name.trim().toLowerCase() === form.Name.trim().toLowerCase(),
+    )
+    if (duplicate) {
+      setError('A dish with this name already exists.')
+      return
+    }
     setError(null)
     setSaving(true)
     try {
