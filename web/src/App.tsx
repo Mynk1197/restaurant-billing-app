@@ -37,7 +37,14 @@ function Shell() {
 
   return (
     <BrowserRouter>
-      <div className="mx-auto flex min-h-screen max-w-md flex-col bg-slate-50">
+      {/* h-[100dvh] (not min-h-screen) is required for <main>'s flex-1 to get
+          an actual bounded height -- otherwise the container just grows
+          past the viewport instead of clipping, overflow-y-auto never
+          engages, the page itself scrolls instead, and position:sticky
+          inside <main> breaks (it sticks relative to a box that never
+          actually scrolls internally, so it just scrolls away with
+          everything else). */}
+      <div className="mx-auto flex h-[100dvh] max-w-md flex-col bg-slate-50">
         <TopBar />
         <main className="flex-1 overflow-y-auto pb-4">
           <AppRoutes />

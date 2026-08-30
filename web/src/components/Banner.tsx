@@ -21,10 +21,7 @@ export default function Banner({ tone, children }: { tone: 'success' | 'error'; 
   }, [])
 
   return (
-    // scroll-mt-16 leaves room for TopBar, which is sticky and would
-    // otherwise overlap (hide) the banner once it's scrolled flush to the
-    // very top of the page -- the page itself scrolls, not just <main>.
-    <p ref={ref} className={`scroll-mt-16 rounded-lg px-3 py-2 text-sm font-medium ${TONE_CLASSES[tone]}`}>
+    <p ref={ref} className={`rounded-lg px-3 py-2 text-sm font-medium ${TONE_CLASSES[tone]}`}>
       {children}
     </p>
   )

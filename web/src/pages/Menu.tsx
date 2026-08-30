@@ -99,9 +99,10 @@ export default function Menu() {
 
   return (
     <div className="px-4 py-4">
-      {/* top-14 clears TopBar's height so this doesn't get tucked behind the
-          sticky header the same way the message banners were. */}
-      <div className="sticky top-14 z-10 -mx-4 mb-4 bg-slate-50 px-4 pb-3 pt-1">
+      {/* <main> is now its own scroll region, fully separate from TopBar, so
+          this only needs to clear its own top edge (top-0) -- no overlap
+          with TopBar to account for. */}
+      <div className="sticky top-0 z-10 -mx-4 mb-4 bg-slate-50 px-4 py-3">
         <button
           onClick={openNew}
           disabled={saving}
@@ -111,19 +112,19 @@ export default function Menu() {
         </button>
 
         <div className="mt-3 flex gap-2">
-          <div className="relative flex-1">
+          <div className="relative min-w-0 flex-1">
             <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search dish name"
-              className="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-800"
+              className="h-11 w-full min-w-0 rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-800"
             />
           </div>
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-white px-2 py-2 text-sm text-gray-800"
+            className="h-11 w-32 shrink-0 rounded-xl border border-gray-200 bg-white px-2 text-sm text-gray-800"
           >
             <option value="">All categories</option>
             {CATEGORY_OPTIONS.map((c) => (
