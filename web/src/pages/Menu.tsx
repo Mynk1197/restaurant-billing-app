@@ -124,7 +124,7 @@ export default function Menu() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-11 w-32 shrink-0 rounded-xl border border-gray-200 bg-white px-2 text-sm text-gray-800"
+            className="h-11 min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-2 text-sm text-gray-800"
           >
             <option value="">All categories</option>
             {CATEGORY_OPTIONS.map((c) => (
