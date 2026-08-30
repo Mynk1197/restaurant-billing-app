@@ -15,6 +15,10 @@ export default function BillView() {
   const [error, setError] = useState<string | null>(null)
   const [pdfSaved, setPdfSaved] = useState(false)
   const [chatOpened, setChatOpened] = useState(false)
+  // Editable independently of the stored bill -- staff may have skipped the
+  // number at checkout, or need to fix a typo, without redoing the whole
+  // bill. Only affects where this WhatsApp chat opens, not the saved record.
+  const [phone, setPhone] = useState(bill?.customerPhone ? String(bill.customerPhone) : '')
 
   useEffect(() => {
     if (bill || !billNo) return
@@ -22,6 +26,7 @@ export default function BillView() {
       const bills = await api.getBills(billNo)
       const found = bills.find((b) => String(b.billNo) === billNo)
       setBill(found ?? null)
+      setPhone(found?.customerPhone ? String(found.customerPhone) : '')
       setLoading(false)
     })()
   }, [bill, billNo])
@@ -45,7 +50,7 @@ export default function BillView() {
     if (!bill) return
     setError(null)
     try {
-      openWhatsAppChat(bill)
+      openWhatsAppChat({ ...bill, customerPhone: phone })
       setChatOpened(true)
     } catch (err) {
       console.error(err)
@@ -144,7 +149,21 @@ export default function BillView() {
         </div>
       )}
 
-      <div className="mt-4 flex flex-col gap-2">
+      <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
+        <label className="text-xs text-gray-500">
+          WhatsApp number
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+            inputMode="numeric"
+            maxLength={10}
+            placeholder="10-digit number"
+            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800"
+          />
+        </label>
+      </div>
+
+      <div className="mt-3 flex flex-col gap-2">
         <button
           onClick={handleDownload}
           className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white"
@@ -154,18 +173,20 @@ export default function BillView() {
         </button>
         <button
           onClick={handleOpenChat}
-          disabled={!bill.customerPhone || !pdfSaved}
+          disabled={phone.length !== 10 || !pdfSaved}
           className="flex items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-bold text-white disabled:opacity-40"
         >
           <IconWhatsApp className="h-4 w-4" />
           2. Open WhatsApp Chat
         </button>
       </div>
-      {!bill.customerPhone && <p className="mt-2 text-center text-xs text-gray-400">Add a WhatsApp number to enable sending.</p>}
-      {bill.customerPhone && !pdfSaved && (
+      {phone.length !== 10 && (
+        <p className="mt-2 text-center text-xs text-gray-400">Enter a 10-digit WhatsApp number to enable sending.</p>
+      )}
+      {phone.length === 10 && !pdfSaved && (
         <p className="mt-2 text-center text-xs text-gray-400">Download the PDF first, then open the chat and attach it — WhatsApp can't auto-attach a file to a specific contact without its paid Business API.</p>
       )}
-      {bill.customerPhone && pdfSaved && (
+      {phone.length === 10 && pdfSaved && (
         <p className="mt-2 text-center text-xs text-gray-400">Now open the chat and attach the downloaded PDF from your Downloads.</p>
       )}
     </div>
