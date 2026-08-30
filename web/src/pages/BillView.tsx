@@ -192,7 +192,10 @@ export default function BillView() {
 
       {/* Sending on WhatsApp is optional -- a customer who doesn't want to
           share their number still needs a way to finish the bill. */}
-      <button onClick={() => navigate('/')} className="mt-4 w-full py-2 text-center text-xs font-medium text-gray-400">
+      <button
+        onClick={() => navigate('/')}
+        className="mt-4 w-full rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-600"
+      >
         Skip WhatsApp · Done, back to Billing
       </button>
     </div>
