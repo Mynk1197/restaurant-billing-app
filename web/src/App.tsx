@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom'
 import { useAuth, AuthProvider } from './auth/AuthContext'
 import TopBar from './components/TopBar'
 import BottomNav from './components/BottomNav'
@@ -10,11 +10,21 @@ import SettingsPage from './pages/SettingsPage'
 import History from './pages/History'
 import Reports from './pages/Reports'
 
+// React Router reuses the same mounted component when only a route *param*
+// changes (going from /bill/5 straight to /bill/3 doesn't remount BillView),
+// so its state (which bill is loaded, whether the PDF was downloaded, any
+// error) would otherwise carry over from the previous bill. Keying by billNo
+// forces a fresh instance per bill, same as e-attendance's class/section key.
+function BillViewRoute() {
+  const { billNo } = useParams()
+  return <BillView key={billNo} />
+}
+
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Billing />} />
-      <Route path="/bill/:billNo" element={<BillView />} />
+      <Route path="/bill/:billNo" element={<BillViewRoute />} />
       <Route path="/menu" element={<Menu />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/history" element={<History />} />
