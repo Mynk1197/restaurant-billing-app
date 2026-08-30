@@ -3,16 +3,7 @@ import { api, type Dish } from '../api/api'
 import { formatCurrency } from '../lib/format'
 import { IconPlus, IconEdit, IconSearch } from '../components/icons'
 import Banner from '../components/Banner'
-
-const CATEGORY_OPTIONS = [
-  'Starter (Veg)',
-  'Starter (Non-Veg)',
-  'Soups & Salads',
-  'Main Course (Veg)',
-  'Main Course (Non-Veg)',
-  'Dessert',
-  'Beverage',
-]
+import { CATEGORY_OPTIONS } from '../lib/categories'
 
 const emptyForm = { Id: '', Name: '', Category: '', Price: '', Active: 'Y' as 'Y' | 'N' }
 
@@ -50,7 +41,16 @@ export default function Menu() {
       list.push(d)
       groups.set(d.Category, list)
     })
-    return Array.from(groups.entries())
+    // Sort by each category's position in the fixed CATEGORY_OPTIONS list
+    // instead of Map insertion order, which otherwise followed whatever
+    // order dishes happen to sit in on the sheet -- any category not in
+    // that list (e.g. leftover free-text from before the dropdown) sorts
+    // after all the known ones instead of disappearing.
+    return Array.from(groups.entries()).sort((a, b) => {
+      const ai = CATEGORY_OPTIONS.indexOf(a[0])
+      const bi = CATEGORY_OPTIONS.indexOf(b[0])
+      return (ai === -1 ? CATEGORY_OPTIONS.length : ai) - (bi === -1 ? CATEGORY_OPTIONS.length : bi)
+    })
   }, [dishes, search, categoryFilter])
 
   function openEdit(dish: Dish) {
@@ -105,7 +105,7 @@ export default function Menu() {
       <div className="sticky top-0 z-10 -mx-4 mb-4 bg-slate-50 px-4 py-3">
         <button
           onClick={openNew}
-          disabled={saving}
+          disabled={loading || saving}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 py-2.5 text-sm font-bold text-white disabled:opacity-40"
         >
           <IconPlus className="h-4 w-4" /> Add Dish
@@ -118,13 +118,15 @@ export default function Menu() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Find Dish"
-              className="h-11 w-full min-w-0 rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-800"
+              disabled={loading || saving}
+              className="h-11 w-full min-w-0 rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
             />
           </div>
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-11 min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-2 text-sm text-gray-800"
+            disabled={loading || saving}
+            className="h-11 min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
           >
             <option value="">All categories</option>
             {CATEGORY_OPTIONS.map((c) => (
