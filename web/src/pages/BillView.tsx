@@ -189,6 +189,12 @@ export default function BillView() {
       {phone.length === 10 && pdfSaved && (
         <p className="mt-2 text-center text-xs text-gray-400">Now open the chat and attach the downloaded PDF from your Downloads.</p>
       )}
+
+      {/* Sending on WhatsApp is optional -- a customer who doesn't want to
+          share their number still needs a way to finish the bill. */}
+      <button onClick={() => navigate('/')} className="mt-4 w-full py-2 text-center text-xs font-medium text-gray-400">
+        Skip WhatsApp · Done, back to Billing
+      </button>
     </div>
   )
 }
