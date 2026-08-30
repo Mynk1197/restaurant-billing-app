@@ -233,7 +233,11 @@ export default function Billing() {
       {showCheckout && (
         <div
           className="fixed inset-0 z-30 flex items-end justify-center bg-black/40"
-          onClick={() => !submitting && setShowCheckout(false)}
+          onClick={() => {
+            if (submitting) return
+            setError(null)
+            setShowCheckout(false)
+          }}
         >
           <div className="w-full max-w-md rounded-t-2xl bg-white p-5" onClick={(e) => e.stopPropagation()}>
             <h3 className="mb-3 text-sm font-bold text-gray-800">Review Bill</h3>
@@ -248,7 +252,10 @@ export default function Billing() {
                 Customer name <span className="text-rose-500">*</span>
                 <input
                   value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
+                  onChange={(e) => {
+                    setCustomerName(e.target.value)
+                    setError(null)
+                  }}
                   disabled={submitting}
                   className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
                 />
@@ -257,7 +264,10 @@ export default function Billing() {
                 WhatsApp number
                 <input
                   value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  onChange={(e) => {
+                    setCustomerPhone(e.target.value.replace(/\D/g, '').slice(0, 10))
+                    setError(null)
+                  }}
                   inputMode="numeric"
                   maxLength={10}
                   disabled={submitting}
@@ -316,7 +326,10 @@ export default function Billing() {
 
             <div className="mt-4 flex gap-2">
               <button
-                onClick={() => setShowCheckout(false)}
+                onClick={() => {
+                  setError(null)
+                  setShowCheckout(false)
+                }}
                 disabled={submitting}
                 className="flex-1 rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-600 disabled:opacity-40"
               >
