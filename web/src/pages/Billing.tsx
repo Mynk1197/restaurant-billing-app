@@ -136,7 +136,7 @@ export default function Billing() {
   const itemCount = lineItems.reduce((sum, it) => sum + it.qty, 0)
 
   return (
-    <div className="flex flex-col gap-4 px-4 py-4 pb-24">
+    <div className={`flex flex-col gap-4 px-4 py-4 ${lineItems.length > 0 ? 'pb-24' : ''}`}>
       {error && !showCheckout && <Banner tone="error">{error}</Banner>}
 
       <div className="sticky top-0 z-10 -mx-4 -mt-4 bg-slate-50 px-4 pb-3 pt-4">
