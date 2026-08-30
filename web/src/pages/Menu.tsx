@@ -117,7 +117,7 @@ export default function Menu() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search dish name"
+              placeholder="Find Dish"
               className="h-11 w-full min-w-0 rounded-xl border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-800"
             />
           </div>
