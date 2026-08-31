@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf'
 import type { Bill } from '../api/api'
-import { formatCurrency, formatDateOnly, formatTimeOnly, digitsOnly } from './format'
+import { formatCurrency, formatDateOnly, formatTimeOnly, toWhatsAppNumber } from './format'
 import { NOTO_SANS_REGULAR_BASE64, NOTO_SANS_BOLD_BASE64 } from './receiptFont'
 
 // jsPDF's built-in fonts (Helvetica etc.) don't include the ₹ glyph, so
@@ -176,7 +176,7 @@ export function openWhatsAppChat(bill: Bill) {
   if (lastWhatsAppTab && !lastWhatsAppTab.closed) {
     lastWhatsAppTab.close()
   }
-  const phone = digitsOnly(bill.customerPhone)
+  const phone = toWhatsAppNumber(bill.customerPhone)
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(whatsAppMessage(bill))}`
   lastWhatsAppTab = window.open(url, '_blank')
 }
