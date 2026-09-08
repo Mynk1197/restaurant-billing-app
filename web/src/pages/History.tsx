@@ -28,36 +28,49 @@ export default function History() {
 
   return (
     <div className="px-4 py-4">
-      <div className="relative mb-3">
-        <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, phone or bill #"
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-800"
-        />
-      </div>
-
       {/* Defaults to today so this doesn't load every bill ever created --
           widen the range to look further back, e.g. when searching for a
           customer whose last visit wasn't today. */}
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-3 flex items-center gap-2">
         <input
           type="date"
           value={dateFrom}
           onChange={(e) => setDateFrom(e.target.value)}
-          className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800"
+          disabled={loading}
+          className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
         />
         <span className="text-xs text-gray-400">to</span>
         <input
           type="date"
           value={dateTo}
           onChange={(e) => setDateTo(e.target.value)}
-          className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800"
+          disabled={loading}
+          className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
         />
       </div>
 
-      {loading && <p className="text-center text-sm text-gray-400">Loading…</p>}
+      <div className="relative mb-3">
+        <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name, phone or bill #"
+          disabled={loading}
+          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
+        />
+      </div>
+
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-xs font-semibold text-gray-500">
+          {loading ? 'Loading…' : `${bills.length} bill${bills.length === 1 ? '' : 's'}`}
+        </p>
+        {!loading && bills.length > 0 && (
+          <p className="text-xs font-bold text-gray-800">
+            {formatCurrency(bills.reduce((sum, b) => sum + b.total, 0))}
+          </p>
+        )}
+      </div>
+
       {!loading && bills.length === 0 && <p className="text-center text-sm text-gray-400">No bills found.</p>}
 
       <div className="flex flex-col gap-2">
