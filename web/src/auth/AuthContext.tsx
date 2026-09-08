@@ -67,6 +67,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             const result = await api.login(response.credential)
             localStorage.setItem('staff', JSON.stringify(result))
+            // A forced logout (expired token) does a full page reload without
+            // changing the URL, so e.g. /menu or /bill/5 stays in the address
+            // bar. The router isn't mounted yet at this point (Login has no
+            // BrowserRouter around it) -- resetting the URL here, before
+            // setStaff swaps in the authenticated Shell that mounts a fresh
+            // BrowserRouter, makes it land on Billing instead of wherever the
+            // session happened to expire.
+            window.history.replaceState(null, '', '/')
             setStaff(result)
           } catch (err) {
             console.error(err)
