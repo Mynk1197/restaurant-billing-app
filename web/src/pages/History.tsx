@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useNavigationType } from 'react-router-dom'
 import { api, type Bill } from '../api/api'
 import { formatCurrency, formatDateTime } from '../lib/format'
 import { IconSearch } from '../components/icons'
@@ -8,11 +8,10 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10)
 }
 
-// Lives outside the component (module scope) rather than in state, so it
-// survives History unmounting when you navigate to a bill and remounting
+// Lives outside the component (module scope) rather than in state, so it can
+// survive History unmounting when you navigate to a bill and remounting
 // when you come back -- React Router doesn't keep this page's state across
-// that. A real page reload re-runs this module from scratch, resetting it
-// back to today, which is the one case filters should actually clear.
+// that on its own.
 const savedFilters = {
   search: '',
   dateFrom: todayStr(),
@@ -21,9 +20,17 @@ const savedFilters = {
 
 export default function History() {
   const navigate = useNavigate()
-  const [search, setSearch] = useState(savedFilters.search)
-  const [dateFrom, setDateFrom] = useState(savedFilters.dateFrom)
-  const [dateTo, setDateTo] = useState(savedFilters.dateTo)
+  // useNavigationType tells us HOW this mount was reached: 'POP' is a
+  // browser-back (e.g. the bill page's Back button, via navigate(-1)) --
+  // that's the "coming back from viewing a bill" case filters should
+  // survive. Anything else (a fresh 'PUSH', like tapping the History tab
+  // in BottomNav from a different section) starts over at today, same as
+  // an actual page reload.
+  const navigationType = useNavigationType()
+  const isReturningToPage = navigationType === 'POP'
+  const [search, setSearch] = useState(isReturningToPage ? savedFilters.search : '')
+  const [dateFrom, setDateFrom] = useState(isReturningToPage ? savedFilters.dateFrom : todayStr())
+  const [dateTo, setDateTo] = useState(isReturningToPage ? savedFilters.dateTo : todayStr())
   const [bills, setBills] = useState<Bill[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -94,7 +101,8 @@ export default function History() {
           <button
             key={bill.billNo}
             onClick={() => navigate(`/bill/${bill.billNo}`, { state: { bill } })}
-            className="flex items-center justify-between rounded-xl bg-white px-3 py-2.5 text-left shadow-sm"
+            disabled={loading}
+            className="flex items-center justify-between rounded-xl bg-white px-3 py-2.5 text-left shadow-sm disabled:opacity-50"
           >
             <div>
               <p className="text-sm font-semibold text-gray-800">#{bill.billNo} · {bill.customerName || 'Walk-in'}</p>
