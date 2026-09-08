@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, type Dish, type Settings } from '../api/api'
 import { db } from '../db/db'
+import { notifyQueueChanged } from '../db/sync'
 import { formatCurrency } from '../lib/format'
 import { CATEGORY_OPTIONS } from '../lib/categories'
 import { IconMinus, IconPlus, IconSearch, IconClose } from '../components/icons'
@@ -114,6 +115,7 @@ export default function Billing() {
     } catch (err) {
       if (!navigator.onLine) {
         await db.billQueue.add({ ...payload, createdAt: new Date().toISOString() })
+        notifyQueueChanged()
         resetCart()
         setShowCheckout(false)
         setError('Offline: bill saved locally and will sync automatically once you\'re back online.')

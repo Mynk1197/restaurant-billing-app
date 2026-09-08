@@ -1,12 +1,32 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { LogoMark } from './icons'
+import { pendingCount, QUEUE_CHANGED_EVENT } from '../db/sync'
 
 export default function TopBar() {
   const { staff, signOut } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [pending, setPending] = useState(0)
 
   const initial = staff?.name?.trim()?.[0]?.toUpperCase() ?? '?'
+
+  useEffect(() => {
+    const refresh = () => {
+      pendingCount().then(setPending)
+    }
+    refresh()
+    // The queue only ever changes from a bill getting queued offline or
+    // syncing back out -- QUEUE_CHANGED_EVENT covers both instantly. The
+    // poll is just a safety net in case that event is ever missed.
+    window.addEventListener(QUEUE_CHANGED_EVENT, refresh)
+    window.addEventListener('online', refresh)
+    const interval = setInterval(refresh, 5000)
+    return () => {
+      window.removeEventListener(QUEUE_CHANGED_EVENT, refresh)
+      window.removeEventListener('online', refresh)
+      clearInterval(interval)
+    }
+  }, [])
 
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-sm">
@@ -15,7 +35,17 @@ export default function TopBar() {
         <span className="text-sm font-bold text-gray-800">Restaurant Billing</span>
       </div>
 
-      <div className="relative">
+      <div className="flex items-center gap-2">
+        {pending > 0 && (
+          <span
+            className="flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-[11px] font-semibold text-amber-700"
+            title={`${pending} bill${pending === 1 ? '' : 's'} saved offline, waiting to sync`}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            {pending} pending
+          </span>
+        )}
+        <div className="relative">
         <button
           onClick={() => setMenuOpen((v) => !v)}
           className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-700"
@@ -39,6 +69,7 @@ export default function TopBar() {
             </div>
           </>
         )}
+        </div>
       </div>
     </header>
   )

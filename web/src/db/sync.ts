@@ -1,6 +1,15 @@
 import { db } from './db'
 import { api } from '../api/api'
 
+// Fired whenever the local offline-bill queue changes (a bill gets queued,
+// or one syncs successfully), so any UI showing a pending count (TopBar) can
+// refresh immediately instead of waiting for its next poll.
+export const QUEUE_CHANGED_EVENT = 'billqueuechanged'
+
+export function notifyQueueChanged() {
+  window.dispatchEvent(new Event(QUEUE_CHANGED_EVENT))
+}
+
 let syncing = false
 
 export async function flushQueue(): Promise<{ synced: number; failed: number }> {
@@ -21,6 +30,7 @@ export async function flushQueue(): Promise<{ synced: number; failed: number }> 
         })
         if (item.id !== undefined) await db.billQueue.delete(item.id)
         synced++
+        notifyQueueChanged()
       } catch {
         failed++
         break // stop on first failure (likely offline again or auth issue); retry later
