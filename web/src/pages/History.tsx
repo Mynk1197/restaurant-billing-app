@@ -8,13 +8,30 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10)
 }
 
+// Lives outside the component (module scope) rather than in state, so it
+// survives History unmounting when you navigate to a bill and remounting
+// when you come back -- React Router doesn't keep this page's state across
+// that. A real page reload re-runs this module from scratch, resetting it
+// back to today, which is the one case filters should actually clear.
+const savedFilters = {
+  search: '',
+  dateFrom: todayStr(),
+  dateTo: todayStr(),
+}
+
 export default function History() {
   const navigate = useNavigate()
-  const [search, setSearch] = useState('')
-  const [dateFrom, setDateFrom] = useState(todayStr())
-  const [dateTo, setDateTo] = useState(todayStr())
+  const [search, setSearch] = useState(savedFilters.search)
+  const [dateFrom, setDateFrom] = useState(savedFilters.dateFrom)
+  const [dateTo, setDateTo] = useState(savedFilters.dateTo)
   const [bills, setBills] = useState<Bill[]>([])
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    savedFilters.search = search
+    savedFilters.dateFrom = dateFrom
+    savedFilters.dateTo = dateTo
+  }, [search, dateFrom, dateTo])
 
   useEffect(() => {
     const timeout = setTimeout(async () => {
