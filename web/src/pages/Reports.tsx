@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, type Reports as ReportsData } from '../api/api'
 import { formatCurrency } from '../lib/format'
+import Banner from '../components/Banner'
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
@@ -12,13 +13,20 @@ export default function Reports() {
   const [data, setData] = useState<ReportsData | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const rangeError = dateFrom > dateTo ? "'From' date must be before 'To' date." : null
+
   useEffect(() => {
+    if (rangeError) {
+      setData(null)
+      setLoading(false)
+      return
+    }
     setLoading(true)
     api.getReports(dateFrom, dateTo).then((res) => {
       setData(res)
       setLoading(false)
     })
-  }, [dateFrom, dateTo])
+  }, [dateFrom, dateTo, rangeError])
 
   return (
     <div className="flex flex-col gap-4 px-4 py-4">
@@ -27,17 +35,20 @@ export default function Reports() {
           type="date"
           value={dateFrom}
           onChange={(e) => setDateFrom(e.target.value)}
-          className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+          disabled={loading}
+          className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
         />
         <input
           type="date"
           value={dateTo}
           onChange={(e) => setDateTo(e.target.value)}
-          className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+          disabled={loading}
+          className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
         />
       </div>
 
-      {loading && <p className="text-center text-sm text-gray-400">Loading…</p>}
+      {rangeError && <Banner tone="error">{rangeError}</Banner>}
+      {!rangeError && loading && <p className="text-center text-sm text-gray-400">Loading…</p>}
 
       {data && (
         <>
