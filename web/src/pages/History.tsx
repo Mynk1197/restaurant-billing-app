@@ -112,7 +112,7 @@ export default function History() {
 
       <label className="mb-3 flex items-center gap-2 text-xs font-medium text-gray-500">
         <input type="checkbox" checked={showVoided} onChange={(e) => setShowVoided(e.target.checked)} />
-        Show voided bills
+        Include voided bills
       </label>
 
       {!rangeError && (
