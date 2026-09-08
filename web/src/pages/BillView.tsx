@@ -15,6 +15,9 @@ export default function BillView() {
   const [error, setError] = useState<string | null>(null)
   const [pdfSaved, setPdfSaved] = useState(false)
   const [chatOpened, setChatOpened] = useState(false)
+  const [showVoidModal, setShowVoidModal] = useState(false)
+  const [voidReason, setVoidReason] = useState('')
+  const [voiding, setVoiding] = useState(false)
   // Editable independently of the stored bill -- staff may have skipped the
   // number at checkout, or need to fix a typo, without redoing the whole
   // bill. Only affects where this WhatsApp chat opens, not the saved record.
@@ -66,6 +69,21 @@ export default function BillView() {
     }
   }
 
+  async function handleVoidConfirm() {
+    if (!bill || !voidReason.trim()) return
+    setVoiding(true)
+    setError(null)
+    try {
+      const result = await api.voidBill(bill.billNo, voidReason.trim())
+      setBill({ ...bill, status: 'Voided', voidReason: result.voidReason, voidedAt: result.voidedAt })
+      setShowVoidModal(false)
+    } catch (err) {
+      setError(err instanceof Error ? `Couldn't void: ${err.message}` : "Couldn't void the bill.")
+    } finally {
+      setVoiding(false)
+    }
+  }
+
   function handleOpenChat() {
     if (!bill) return
     setError(null)
@@ -107,10 +125,21 @@ export default function BillView() {
     )
   }
 
+  const isVoided = bill.status === 'Voided'
+
   return (
     <div className="px-4 py-4">
       {backButton}
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
+
+      {isVoided && (
+        <div className="mb-3 rounded-xl bg-rose-50 px-3 py-2.5 text-sm text-rose-700">
+          <p className="font-bold">VOIDED</p>
+          <p className="mt-0.5 text-xs">Reason: {bill.voidReason}</p>
+          {bill.voidedAt && <p className="text-xs text-rose-500">{formatDateTime(bill.voidedAt)}</p>}
+        </div>
+      )}
+
+      <div className={`rounded-2xl bg-white p-5 shadow-sm ${isVoided ? 'opacity-60' : ''}`}>
         <div className="text-center">
           <p className="text-base font-extrabold text-gray-800">{bill.restaurantName}</p>
           {bill.address && <p className="text-xs text-gray-400">{bill.address}</p>}
@@ -170,45 +199,99 @@ export default function BillView() {
         </div>
       )}
 
-      <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
-        <label className="text-xs text-gray-500">
-          WhatsApp number
-          <input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-            inputMode="numeric"
-            maxLength={10}
-            placeholder="10-digit number"
-            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800"
-          />
-        </label>
-      </div>
+      {!isVoided && (
+        <>
+          <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
+            <label className="text-xs text-gray-500">
+              WhatsApp number
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="10-digit number"
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800"
+              />
+            </label>
+          </div>
 
-      <div className="mt-3 flex flex-col gap-2">
-        <button
-          onClick={handleDownload}
-          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white"
-        >
-          <IconDownload className="h-4 w-4" />
-          {pdfSaved ? 'PDF downloaded — tap again to re-download' : '1. Download Bill PDF'}
-        </button>
-        <button
-          onClick={handleOpenChat}
-          disabled={phone.length !== 10 || !pdfSaved}
-          className="flex items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-bold text-white disabled:opacity-40"
-        >
-          <IconWhatsApp className="h-4 w-4" />
-          2. Open WhatsApp Chat
-        </button>
-      </div>
-      {phone.length !== 10 && (
-        <p className="mt-2 text-center text-xs text-gray-400">Enter a 10-digit WhatsApp number to enable sending.</p>
+          <div className="mt-3 flex flex-col gap-2">
+            <button
+              onClick={handleDownload}
+              className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 text-sm font-bold text-white"
+            >
+              <IconDownload className="h-4 w-4" />
+              {pdfSaved ? 'PDF downloaded — tap again to re-download' : '1. Download Bill PDF'}
+            </button>
+            <button
+              onClick={handleOpenChat}
+              disabled={phone.length !== 10 || !pdfSaved}
+              className="flex items-center justify-center gap-2 rounded-xl bg-green-600 py-3 text-sm font-bold text-white disabled:opacity-40"
+            >
+              <IconWhatsApp className="h-4 w-4" />
+              2. Open WhatsApp Chat
+            </button>
+          </div>
+          {phone.length !== 10 && (
+            <p className="mt-2 text-center text-xs text-gray-400">Enter a 10-digit WhatsApp number to enable sending.</p>
+          )}
+          {phone.length === 10 && !pdfSaved && (
+            <p className="mt-2 text-center text-xs text-gray-400">Download the PDF first, then open the chat and attach it — WhatsApp can't auto-attach a file to a specific contact without its paid Business API.</p>
+          )}
+          {phone.length === 10 && pdfSaved && (
+            <p className="mt-2 text-center text-xs text-gray-400">Now open the chat and attach the downloaded PDF from your Downloads.</p>
+          )}
+
+          <button
+            onClick={() => {
+              setVoidReason('')
+              setShowVoidModal(true)
+            }}
+            className="mt-4 w-full rounded-xl border border-rose-200 bg-white py-2.5 text-sm font-semibold text-rose-600"
+          >
+            Void Bill
+          </button>
+        </>
       )}
-      {phone.length === 10 && !pdfSaved && (
-        <p className="mt-2 text-center text-xs text-gray-400">Download the PDF first, then open the chat and attach it — WhatsApp can't auto-attach a file to a specific contact without its paid Business API.</p>
-      )}
-      {phone.length === 10 && pdfSaved && (
-        <p className="mt-2 text-center text-xs text-gray-400">Now open the chat and attach the downloaded PDF from your Downloads.</p>
+
+      {showVoidModal && (
+        <div
+          className="fixed inset-0 z-30 flex items-end justify-center bg-black/40"
+          onClick={() => !voiding && setShowVoidModal(false)}
+        >
+          <div className="w-full max-w-md rounded-t-2xl bg-white p-5" onClick={(e) => e.stopPropagation()}>
+            <h3 className="mb-1 text-sm font-bold text-gray-800">Void Bill #{bill.billNo}</h3>
+            <p className="mb-3 text-xs text-gray-500">
+              This keeps the bill for record-keeping but excludes it from Reports and History totals. This can't be undone.
+            </p>
+            <label className="text-xs text-gray-500">
+              Reason <span className="text-rose-500">*</span>
+              <input
+                value={voidReason}
+                onChange={(e) => setVoidReason(e.target.value)}
+                disabled={voiding}
+                placeholder="e.g. wrong items, customer walked out"
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
+              />
+            </label>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => setShowVoidModal(false)}
+                disabled={voiding}
+                className="flex-1 rounded-xl bg-gray-100 py-2.5 text-sm font-semibold text-gray-600 disabled:opacity-40"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleVoidConfirm}
+                disabled={voiding || !voidReason.trim()}
+                className="flex-1 rounded-xl bg-rose-600 py-2.5 text-sm font-bold text-white disabled:opacity-40"
+              >
+                {voiding ? 'Voiding…' : 'Confirm Void'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

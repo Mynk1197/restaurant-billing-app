@@ -13,7 +13,8 @@ var DISHES_HEADERS = ['Id', 'Name', 'Category', 'Price', 'Active'];
 var SETTINGS_HEADERS = ['Key', 'Value'];
 var BILLS_HEADERS = [
   'BillNo', 'DateTime', 'CustomerName', 'CustomerPhone',
-  'Subtotal', 'Discount', 'SGST', 'CGST', 'Total', 'PaymentMethod', 'ItemsJSON'
+  'Subtotal', 'Discount', 'SGST', 'CGST', 'Total', 'PaymentMethod', 'ItemsJSON',
+  'Status', 'VoidReason', 'VoidedAt'
 ];
 
 var DEFAULT_SETTINGS = {
@@ -63,6 +64,9 @@ function handle(e) {
         break;
       case 'getReports':
         result = getReports(params);
+        break;
+      case 'voidBill':
+        result = voidBill(params);
         break;
       default:
         throw new Error('Unknown action: ' + action);
@@ -266,7 +270,8 @@ function createBill(params) {
     CGST: cgst,
     Total: total,
     PaymentMethod: params.paymentMethod || 'Cash',
-    ItemsJSON: JSON.stringify(lineItems)
+    ItemsJSON: JSON.stringify(lineItems),
+    Status: 'Active'
   };
   appendRow(SHEET_BILLS, BILLS_HEADERS, bill);
   forceCellAsText(SHEET_BILLS, BILLS_HEADERS, getSheet(SHEET_BILLS).getLastRow(), 'CustomerPhone', bill.CustomerPhone);
@@ -287,12 +292,20 @@ function createBill(params) {
     address: settings.Address,
     phone: settings.Phone,
     sgstRate: sgstRate,
-    cgstRate: cgstRate
+    cgstRate: cgstRate,
+    status: 'Active',
+    status: 'Active'
   };
 }
 
 function round2(n) {
   return Math.round(n * 100) / 100;
+}
+
+// Rows written before the Status column existed come back with it blank --
+// treated as Active so old bills don't vanish from History/Reports.
+function billStatus(row) {
+  return row.Status || 'Active';
 }
 
 function billRowToBill(row, settings) {
@@ -311,7 +324,10 @@ function billRowToBill(row, settings) {
     paymentMethod: row.PaymentMethod,
     restaurantName: settings.RestaurantName,
     address: settings.Address,
-    phone: settings.Phone
+    phone: settings.Phone,
+    status: billStatus(row),
+    voidReason: row.VoidReason || '',
+    voidedAt: row.VoidedAt || ''
   };
 }
 
@@ -320,8 +336,10 @@ function getBills(params) {
   var search = String(params.search || '').toLowerCase();
   var dateFrom = params.dateFrom;
   var dateTo = params.dateTo;
+  var includeVoided = params.includeVoided === 'true';
 
   var filtered = all.filter(function (b) {
+    if (!includeVoided && billStatus(b) === 'Voided') return false;
     if (dateFrom || dateTo) {
       var d = String(b.DateTime).slice(0, 10);
       if (dateFrom && d < dateFrom) return false;
@@ -340,10 +358,27 @@ function getBills(params) {
   return filtered.map(function (row) { return billRowToBill(row, settings); });
 }
 
+function voidBill(params) {
+  var reason = String(params.reason || '').trim();
+  if (!reason) throw new Error('A reason is required to void a bill.');
+  var rowIdx = findRowIndexByKey(SHEET_BILLS, BILLS_HEADERS, 'BillNo', params.billNo);
+  if (rowIdx < 0) throw new Error('Bill not found');
+  var sh = getSheet(SHEET_BILLS);
+  var statusCol = BILLS_HEADERS.indexOf('Status') + 1;
+  var existing = sh.getRange(rowIdx, statusCol).getValue();
+  if (existing === 'Voided') throw new Error('This bill is already voided.');
+  var voidedAt = new Date().toISOString();
+  sh.getRange(rowIdx, statusCol).setValue('Voided');
+  sh.getRange(rowIdx, BILLS_HEADERS.indexOf('VoidedAt') + 1).setValue(voidedAt);
+  forceCellAsText(SHEET_BILLS, BILLS_HEADERS, rowIdx, 'VoidReason', reason);
+  return { billNo: params.billNo, status: 'Voided', voidReason: reason, voidedAt: voidedAt };
+}
+
 function getReports(params) {
   var dateFrom = params.dateFrom;
   var dateTo = params.dateTo;
   var all = sheetToObjects(SHEET_BILLS, BILLS_HEADERS).filter(function (b) {
+    if (billStatus(b) === 'Voided') return false;
     var d = String(b.DateTime).slice(0, 10);
     if (dateFrom && d < dateFrom) return false;
     if (dateTo && d > dateTo) return false;

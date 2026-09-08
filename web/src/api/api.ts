@@ -91,6 +91,9 @@ export interface Bill {
   phone: string
   sgstRate?: number
   cgstRate?: number
+  status: 'Active' | 'Voided'
+  voidReason?: string
+  voidedAt?: string
 }
 
 export interface Reports {
@@ -124,6 +127,12 @@ export const api = {
       discount: String(payload.discount),
       paymentMethod: payload.paymentMethod,
     }),
-  getBills: (search = '', dateFrom = '', dateTo = '') => call<Bill[]>('getBills', { search, dateFrom, dateTo }),
+  getBills: (search = '', dateFrom = '', dateTo = '', includeVoided = false) =>
+    call<Bill[]>('getBills', { search, dateFrom, dateTo, includeVoided: String(includeVoided) }),
   getReports: (dateFrom: string, dateTo: string) => call<Reports>('getReports', { dateFrom, dateTo }),
+  voidBill: (billNo: number, reason: string) =>
+    call<{ billNo: string; status: string; voidReason: string; voidedAt: string }>('voidBill', {
+      billNo: String(billNo),
+      reason,
+    }),
 }

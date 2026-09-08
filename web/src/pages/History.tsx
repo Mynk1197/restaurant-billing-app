@@ -41,6 +41,7 @@ export default function History() {
   const [dateTo, setDateTo] = useState(isReturningToPage ? savedFilters.dateTo : todayStr())
   const [bills, setBills] = useState<Bill[]>([])
   const [loading, setLoading] = useState(true)
+  const [showVoided, setShowVoided] = useState(false)
 
   const rangeDays = daysBetween(dateFrom, dateTo)
   const rangeError =
@@ -64,12 +65,12 @@ export default function History() {
     }
     const timeout = setTimeout(async () => {
       setLoading(true)
-      const results = await api.getBills(search, dateFrom, dateTo)
+      const results = await api.getBills(search, dateFrom, dateTo, showVoided)
       setBills(results)
       setLoading(false)
     }, 300)
     return () => clearTimeout(timeout)
-  }, [search, dateFrom, dateTo, rangeError])
+  }, [search, dateFrom, dateTo, rangeError, showVoided])
 
   return (
     <div className="px-4 py-4">
@@ -109,6 +110,11 @@ export default function History() {
         />
       </div>
 
+      <label className="mb-3 flex items-center gap-2 text-xs font-medium text-gray-500">
+        <input type="checkbox" checked={showVoided} onChange={(e) => setShowVoided(e.target.checked)} />
+        Show voided bills
+      </label>
+
       {!rangeError && (
         <div className="mb-3 flex items-center justify-between">
           <p className="text-xs font-semibold text-gray-500">
@@ -116,7 +122,7 @@ export default function History() {
           </p>
           {!loading && bills.length > 0 && (
             <p className="text-xs font-bold text-gray-800">
-              Total: {formatCurrency(bills.reduce((sum, b) => sum + b.total, 0))}
+              Total: {formatCurrency(bills.filter((b) => b.status !== 'Voided').reduce((sum, b) => sum + b.total, 0))}
             </p>
           )}
         </div>
@@ -130,13 +136,22 @@ export default function History() {
             key={bill.billNo}
             onClick={() => navigate(`/bill/${bill.billNo}`, { state: { bill } })}
             disabled={loading}
-            className="flex items-center justify-between rounded-xl bg-white px-3 py-2.5 text-left shadow-sm disabled:opacity-50"
+            className={`flex items-center justify-between rounded-xl bg-white px-3 py-2.5 text-left shadow-sm disabled:opacity-50 ${
+              bill.status === 'Voided' ? 'opacity-60' : ''
+            }`}
           >
             <div>
-              <p className="text-sm font-semibold text-gray-800">#{bill.billNo} · {bill.customerName || 'Walk-in'}</p>
+              <p className="text-sm font-semibold text-gray-800">
+                #{bill.billNo} · {bill.customerName || 'Walk-in'}
+                {bill.status === 'Voided' && (
+                  <span className="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-600">VOIDED</span>
+                )}
+              </p>
               <p className="text-xs text-gray-400">{formatDateTime(bill.dateTime)}</p>
             </div>
-            <p className="text-sm font-bold text-gray-800">{formatCurrency(bill.total)}</p>
+            <p className={`text-sm font-bold ${bill.status === 'Voided' ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+              {formatCurrency(bill.total)}
+            </p>
           </button>
         ))}
       </div>
