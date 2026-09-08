@@ -4,6 +4,8 @@ export const CATEGORY_OPTIONS = [
   'Soups & Salads',
   'Main Course (Veg)',
   'Main Course (Non-Veg)',
+  'Side Dish',
   'Dessert',
   'Beverage',
+  'Extras & Charges',
 ]
