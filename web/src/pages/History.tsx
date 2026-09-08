@@ -3,9 +3,17 @@ import { useNavigate, useNavigationType } from 'react-router-dom'
 import { api, type Bill } from '../api/api'
 import { formatCurrency, formatDateTime } from '../lib/format'
 import { IconSearch } from '../components/icons'
+import Banner from '../components/Banner'
+
+const MAX_RANGE_DAYS = 7
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
+}
+
+function daysBetween(from: string, to: string): number {
+  const msPerDay = 24 * 60 * 60 * 1000
+  return Math.round((new Date(to + 'T00:00:00').getTime() - new Date(from + 'T00:00:00').getTime()) / msPerDay)
 }
 
 // Lives outside the component (module scope) rather than in state, so it can
@@ -34,6 +42,14 @@ export default function History() {
   const [bills, setBills] = useState<Bill[]>([])
   const [loading, setLoading] = useState(true)
 
+  const rangeDays = daysBetween(dateFrom, dateTo)
+  const rangeError =
+    rangeDays < 0
+      ? "'From' date must be before 'To' date."
+      : rangeDays > MAX_RANGE_DAYS - 1
+        ? `Date range can't be more than ${MAX_RANGE_DAYS} days.`
+        : null
+
   useEffect(() => {
     savedFilters.search = search
     savedFilters.dateFrom = dateFrom
@@ -41,6 +57,11 @@ export default function History() {
   }, [search, dateFrom, dateTo])
 
   useEffect(() => {
+    if (rangeError) {
+      setBills([])
+      setLoading(false)
+      return
+    }
     const timeout = setTimeout(async () => {
       setLoading(true)
       const results = await api.getBills(search, dateFrom, dateTo)
@@ -48,7 +69,7 @@ export default function History() {
       setLoading(false)
     }, 300)
     return () => clearTimeout(timeout)
-  }, [search, dateFrom, dateTo])
+  }, [search, dateFrom, dateTo, rangeError])
 
   return (
     <div className="px-4 py-4">
@@ -72,6 +93,11 @@ export default function History() {
           className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
         />
       </div>
+      {rangeError && (
+        <div className="mb-3">
+          <Banner tone="error">{rangeError}</Banner>
+        </div>
+      )}
 
       <div className="relative mb-3">
         <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300" />
@@ -83,18 +109,20 @@ export default function History() {
         />
       </div>
 
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-semibold text-gray-500">
-          {loading ? 'Loading…' : `${bills.length} bill${bills.length === 1 ? '' : 's'}`}
-        </p>
-        {!loading && bills.length > 0 && (
-          <p className="text-xs font-bold text-gray-800">
-            Total: {formatCurrency(bills.reduce((sum, b) => sum + b.total, 0))}
+      {!rangeError && (
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-xs font-semibold text-gray-500">
+            {loading ? 'Loading…' : `${bills.length} bill${bills.length === 1 ? '' : 's'}`}
           </p>
-        )}
-      </div>
+          {!loading && bills.length > 0 && (
+            <p className="text-xs font-bold text-gray-800">
+              Total: {formatCurrency(bills.reduce((sum, b) => sum + b.total, 0))}
+            </p>
+          )}
+        </div>
+      )}
 
-      {!loading && bills.length === 0 && <p className="text-center text-sm text-gray-400">No bills found.</p>}
+      {!loading && !rangeError && bills.length === 0 && <p className="text-center text-sm text-gray-400">No bills found.</p>}
 
       <div className="flex flex-col gap-2">
         {bills.map((bill) => (
