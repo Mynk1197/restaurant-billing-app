@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api, type Bill } from '../api/api'
 import { formatCurrency, formatDateTime } from '../lib/format'
 import { openWhatsAppChat, downloadBillPdf } from '../lib/receipt'
-import { IconWhatsApp, IconDownload, IconCheck } from '../components/icons'
+import { IconWhatsApp, IconDownload, IconCheck, IconArrowLeft } from '../components/icons'
 import Banner from '../components/Banner'
 
 export default function BillView() {
@@ -31,8 +31,28 @@ export default function BillView() {
     })()
   }, [bill, billNo])
 
-  if (loading) return <p className="px-4 py-8 text-center text-sm text-gray-400">Loading bill…</p>
-  if (!bill) return <p className="px-4 py-8 text-center text-sm text-gray-400">Bill not found.</p>
+  const backButton = (
+    <button onClick={() => navigate(-1)} className="mb-3 flex items-center gap-1 text-sm font-medium text-gray-500">
+      <IconArrowLeft className="h-4 w-4" /> Back
+    </button>
+  )
+
+  if (loading) {
+    return (
+      <div className="px-4 py-4">
+        {backButton}
+        <p className="py-8 text-center text-sm text-gray-400">Loading bill…</p>
+      </div>
+    )
+  }
+  if (!bill) {
+    return (
+      <div className="px-4 py-4">
+        {backButton}
+        <p className="py-8 text-center text-sm text-gray-400">Bill not found.</p>
+      </div>
+    )
+  }
 
   function handleDownload() {
     if (!bill) return
@@ -75,10 +95,10 @@ export default function BillView() {
           Attach the downloaded PDF in that chat and send it, if you haven't already.
         </p>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate(-1)}
           className="mt-6 w-full max-w-xs rounded-xl bg-orange-600 py-3 text-sm font-bold text-white"
         >
-          Close · Back to Billing
+          Close
         </button>
         <button onClick={() => setChatOpened(false)} className="mt-3 text-xs font-medium text-gray-400">
           View receipt again
@@ -89,6 +109,7 @@ export default function BillView() {
 
   return (
     <div className="px-4 py-4">
+      {backButton}
       <div className="rounded-2xl bg-white p-5 shadow-sm">
         <div className="text-center">
           <p className="text-base font-extrabold text-gray-800">{bill.restaurantName}</p>
@@ -189,15 +210,6 @@ export default function BillView() {
       {phone.length === 10 && pdfSaved && (
         <p className="mt-2 text-center text-xs text-gray-400">Now open the chat and attach the downloaded PDF from your Downloads.</p>
       )}
-
-      {/* Sending on WhatsApp is optional -- a customer who doesn't want to
-          share their number still needs a way to finish the bill. */}
-      <button
-        onClick={() => navigate('/')}
-        className="mt-4 w-full rounded-xl border border-gray-200 bg-white py-3 text-sm font-semibold text-gray-600"
-      >
-        Skip WhatsApp · Done, back to Billing
-      </button>
     </div>
   )
 }

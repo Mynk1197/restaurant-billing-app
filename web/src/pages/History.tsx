@@ -66,7 +66,7 @@ export default function History() {
         </p>
         {!loading && bills.length > 0 && (
           <p className="text-xs font-bold text-gray-800">
-            {formatCurrency(bills.reduce((sum, b) => sum + b.total, 0))}
+            Total: {formatCurrency(bills.reduce((sum, b) => sum + b.total, 0))}
           </p>
         )}
       </div>
