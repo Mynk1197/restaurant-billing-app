@@ -4,31 +4,56 @@ import { api, type Bill } from '../api/api'
 import { formatCurrency, formatDateTime } from '../lib/format'
 import { IconSearch } from '../components/icons'
 
+function todayStr() {
+  return new Date().toISOString().slice(0, 10)
+}
+
 export default function History() {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
+  const [dateFrom, setDateFrom] = useState(todayStr())
+  const [dateTo, setDateTo] = useState(todayStr())
   const [bills, setBills] = useState<Bill[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const timeout = setTimeout(async () => {
       setLoading(true)
-      const results = await api.getBills(search)
+      const results = await api.getBills(search, dateFrom, dateTo)
       setBills(results)
       setLoading(false)
     }, 300)
     return () => clearTimeout(timeout)
-  }, [search])
+  }, [search, dateFrom, dateTo])
 
   return (
     <div className="px-4 py-4">
-      <div className="relative mb-4">
+      <div className="relative mb-3">
         <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, phone or bill #"
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm"
+          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-800"
+        />
+      </div>
+
+      {/* Defaults to today so this doesn't load every bill ever created --
+          widen the range to look further back, e.g. when searching for a
+          customer whose last visit wasn't today. */}
+      <div className="mb-4 flex items-center gap-2">
+        <input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+          className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800"
+        />
+        <span className="text-xs text-gray-400">to</span>
+        <input
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+          className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800"
         />
       </div>
 
