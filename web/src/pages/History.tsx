@@ -72,8 +72,7 @@ export default function History() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, phone or bill #"
-          disabled={loading}
-          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
+          className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-800"
         />
       </div>
 
