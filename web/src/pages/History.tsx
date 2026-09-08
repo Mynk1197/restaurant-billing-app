@@ -24,6 +24,7 @@ const savedFilters = {
   search: '',
   dateFrom: todayStr(),
   dateTo: todayStr(),
+  showVoided: false,
 }
 
 export default function History() {
@@ -41,7 +42,7 @@ export default function History() {
   const [dateTo, setDateTo] = useState(isReturningToPage ? savedFilters.dateTo : todayStr())
   const [bills, setBills] = useState<Bill[]>([])
   const [loading, setLoading] = useState(true)
-  const [showVoided, setShowVoided] = useState(false)
+  const [showVoided, setShowVoided] = useState(isReturningToPage ? savedFilters.showVoided : false)
 
   const rangeDays = daysBetween(dateFrom, dateTo)
   const rangeError =
@@ -55,7 +56,8 @@ export default function History() {
     savedFilters.search = search
     savedFilters.dateFrom = dateFrom
     savedFilters.dateTo = dateTo
-  }, [search, dateFrom, dateTo])
+    savedFilters.showVoided = showVoided
+  }, [search, dateFrom, dateTo, showVoided])
 
   useEffect(() => {
     if (rangeError) {
@@ -111,7 +113,12 @@ export default function History() {
       </div>
 
       <label className="mb-3 flex items-center gap-2 text-xs font-medium text-gray-500">
-        <input type="checkbox" checked={showVoided} onChange={(e) => setShowVoided(e.target.checked)} />
+        <input
+          type="checkbox"
+          checked={showVoided}
+          onChange={(e) => setShowVoided(e.target.checked)}
+          disabled={loading}
+        />
         Include voided bills
       </label>
 
