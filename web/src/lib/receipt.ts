@@ -2,6 +2,7 @@ import jsPDF from 'jspdf'
 import type { Bill } from '../api/api'
 import { formatCurrency, formatDateOnly, formatTimeOnly, toWhatsAppNumber } from './format'
 import { NOTO_SANS_REGULAR_BASE64, NOTO_SANS_BOLD_BASE64 } from './receiptFont'
+import { CATEGORY_OPTIONS } from './categories'
 
 // jsPDF's built-in fonts (Helvetica etc.) don't include the ₹ glyph, so
 // doc.text() rendered it as a broken box. Noto Sans does have it -- it's
@@ -15,8 +16,11 @@ function registerReceiptFont(doc: jsPDF) {
   doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold')
 }
 
-// Groups by category in first-seen order, keeping items within a category
-// in the order they were added to the bill.
+// Groups by category, sorted by CATEGORY_OPTIONS' fixed order (matching
+// Menu and Billing) rather than the order items happened to be added to the
+// cart -- any category not in that list (e.g. leftover free-text from
+// before the dropdown existed) sorts after the known ones instead of being
+// dropped. Items within a category keep the order they were added.
 function groupByCategory(items: Bill['items']): { category: string; items: Bill['items'] }[] {
   const order: string[] = []
   const groups = new Map<string, Bill['items']>()
@@ -27,6 +31,11 @@ function groupByCategory(items: Bill['items']): { category: string; items: Bill[
       order.push(key)
     }
     groups.get(key)!.push(item)
+  })
+  order.sort((a, b) => {
+    const ai = CATEGORY_OPTIONS.indexOf(a)
+    const bi = CATEGORY_OPTIONS.indexOf(b)
+    return (ai === -1 ? CATEGORY_OPTIONS.length : ai) - (bi === -1 ? CATEGORY_OPTIONS.length : bi)
   })
   return order.map((category) => ({ category, items: groups.get(category)! }))
 }
