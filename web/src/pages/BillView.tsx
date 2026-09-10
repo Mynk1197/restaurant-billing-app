@@ -34,9 +34,19 @@ export default function BillView() {
     })()
   }, [bill, billNo])
 
+  // Whoever navigated here can say where "done" should lead (Billing after
+  // a walk-in bill, Tables after finalizing a table order) via this state --
+  // that context is otherwise lost, since navigate(-1) after finalizing a
+  // table order would go back to that specific table's now-deleted order
+  // screen instead of the Tables grid. Falls back to plain browser-back
+  // (e.g. opened from History) when nothing set it.
+  const returnTo = (location.state as { returnTo?: string } | null)?.returnTo
+  const returnLabel = returnTo === '/' ? 'Back to Billing' : returnTo === '/tables' ? 'Back to Tables' : 'Back'
+  const goBack = () => (returnTo ? navigate(returnTo) : navigate(-1))
+
   const backButton = (
-    <button onClick={() => navigate(-1)} className="mb-3 flex items-center gap-1 text-sm font-medium text-gray-500">
-      <IconArrowLeft className="h-4 w-4" /> Back
+    <button onClick={goBack} className="mb-3 flex items-center gap-1 text-sm font-medium text-gray-500">
+      <IconArrowLeft className="h-4 w-4" /> {returnLabel}
     </button>
   )
 
@@ -113,10 +123,10 @@ export default function BillView() {
           Attach the downloaded PDF in that chat and send it, if you haven't already.
         </p>
         <button
-          onClick={() => navigate(-1)}
+          onClick={goBack}
           className="mt-6 w-full max-w-xs rounded-xl bg-orange-600 py-3 text-sm font-bold text-white"
         >
-          Close
+          {returnTo ? `Close · ${returnLabel}` : 'Close'}
         </button>
         <button onClick={() => setChatOpened(false)} className="mt-3 text-xs font-medium text-gray-400">
           View receipt again

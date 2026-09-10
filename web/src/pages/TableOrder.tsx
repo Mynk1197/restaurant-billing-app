@@ -148,7 +148,7 @@ export default function TableOrder() {
       await flushPendingSave()
       if (!orderId) throw new Error('Order not saved yet, try again.')
       const bill = await api.finalizeOrder(orderId)
-      navigate(`/bill/${bill.billNo}`, { state: { bill } })
+      navigate(`/bill/${bill.billNo}`, { state: { bill, returnTo: '/tables' } })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to finalize bill.')
     } finally {

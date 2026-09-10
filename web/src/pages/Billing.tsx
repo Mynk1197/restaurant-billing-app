@@ -90,7 +90,7 @@ export default function Billing() {
     try {
       const bill = await api.createBill(payload)
       resetCart()
-      navigate(`/bill/${bill.billNo}`, { state: { bill } })
+      navigate(`/bill/${bill.billNo}`, { state: { bill, returnTo: '/' } })
     } catch (err) {
       if (!navigator.onLine) {
         await db.billQueue.add({ ...payload, createdAt: new Date().toISOString() })
