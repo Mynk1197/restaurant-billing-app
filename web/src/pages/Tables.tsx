@@ -43,7 +43,10 @@ export default function Tables() {
           {tableNumbers.map((tableNumber) => {
             const order = orderByTable.get(tableNumber)
             const occupied = !!order
-            const total = order ? order.items.reduce((sum, it) => sum + it.lineTotal, 0) : 0
+            // Order.items (an in-progress draft) don't carry a computed
+            // lineTotal the way a finalized Bill's items do -- only
+            // price/qty are stored, so the running total is computed here.
+            const total = order ? order.items.reduce((sum, it) => sum + it.price * it.qty, 0) : 0
             return (
               <button
                 key={tableNumber}
