@@ -108,12 +108,31 @@ function jsonOut(obj) {
 
 // ---------- Auth ----------
 
+// Every action pays for this before doing anything else, and verifying the
+// token means an extra network round trip out to Google's own servers on
+// top of the one the client already made to reach this script -- caching
+// the result (keyed by a hash of the token, since the token itself is far
+// too long for a cache key) cuts that out for repeated calls within the
+// window. 5 minutes is short enough that removing someone from the Staff
+// sheet takes effect quickly, and well under the token's own ~1hr lifetime,
+// so this can't return a validation result for a token Google has since
+// invalidated by more than the cache window.
+var AUTH_CACHE_SECONDS = 300;
+
 function requireAuth(params) {
   var idToken = params.idToken;
   if (!idToken) throw new Error('Missing idToken');
+
+  var cache = CacheService.getScriptCache();
+  var cacheKey = 'auth_' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, idToken));
+  var cached = cache.get(cacheKey);
+  if (cached) return JSON.parse(cached);
+
   var email = verifyIdTokenAndGetEmail(idToken);
   var staff = getStaffByEmail(email);
   if (!staff) throw new Error('Not authorized: ' + email);
+
+  cache.put(cacheKey, JSON.stringify(staff), AUTH_CACHE_SECONDS);
   return staff;
 }
 

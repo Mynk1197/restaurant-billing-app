@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { api, type Dish, type Settings } from '../api/api'
+import { api } from '../api/api'
+import { useDishesAndSettings } from '../hooks/useDishesAndSettings'
 import { formatCurrency } from '../lib/format'
 import { IconArrowLeft } from '../components/icons'
 import Banner from '../components/Banner'
@@ -12,9 +13,7 @@ const AUTOSAVE_DELAY_MS = 1200
 export default function TableOrder() {
   const { tableNumber } = useParams()
   const navigate = useNavigate()
-  const [dishes, setDishes] = useState<Dish[]>([])
-  const [settings, setSettings] = useState<Settings | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { dishes, settings, loading } = useDishesAndSettings()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [cart, setCart] = useState<Record<string, number>>({})
@@ -35,17 +34,19 @@ export default function TableOrder() {
   // walking back through history further than the single tap intended.
   const leavingRef = useRef(false)
 
+  // A table's draft order is server-side session state, not something a
+  // stale local cache could ever stand in for -- always fetched fresh, and
+  // kept independent of the dishes/settings loading state above so the
+  // dish grid (which can render straight from cache) doesn't wait on this.
+  // orderRestored gates the autosave effect below so restoring an existing
+  // order's fields doesn't immediately re-save that same data back to
+  // itself as if it were a fresh edit.
+  const [orderRestored, setOrderRestored] = useState(false)
+
   useEffect(() => {
     if (!tableNumber) return
     ;(async () => {
-      setLoading(true)
-      const [freshDishes, freshSettings, existing] = await Promise.all([
-        api.getDishes(true),
-        api.getSettings(),
-        api.getOrder({ tableNumber }),
-      ])
-      setDishes(freshDishes)
-      setSettings(freshSettings)
+      const existing = await api.getOrder({ tableNumber })
       if (existing) {
         setOrderId(existing.orderId)
         setCustomerName(existing.customerName)
@@ -58,7 +59,7 @@ export default function TableOrder() {
         })
         setCart(restoredCart)
       }
-      setLoading(false)
+      setOrderRestored(true)
     })()
   }, [tableNumber])
 
@@ -96,7 +97,7 @@ export default function TableOrder() {
   const latestPayloadRef = useRef<null | (() => Promise<void>)>(null)
 
   useEffect(() => {
-    if (loading || !tableNumber) return
+    if (loading || !orderRestored || !tableNumber) return
     if (!lineItems.length && !orderId) return
 
     const doSave = async () => {
@@ -125,7 +126,7 @@ export default function TableOrder() {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lineItems, customerName, customerPhone, paymentMethod, discount, loading])
+  }, [lineItems, customerName, customerPhone, paymentMethod, discount, loading, orderRestored])
 
   async function flushPendingSave() {
     if (saveTimeoutRef.current) {

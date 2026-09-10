@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { api, type Dish, type Settings } from '../api/api'
+import { api } from '../api/api'
 import { db } from '../db/db'
 import { notifyQueueChanged } from '../db/sync'
+import { useDishesAndSettings } from '../hooks/useDishesAndSettings'
 import { formatCurrency } from '../lib/format'
 import Banner from '../components/Banner'
 import DishGrid from '../components/DishGrid'
@@ -11,9 +12,7 @@ const PAYMENT_METHODS = ['Cash', 'Card', 'UPI']
 
 export default function Billing() {
   const navigate = useNavigate()
-  const [dishes, setDishes] = useState<Dish[]>([])
-  const [settings, setSettings] = useState<Settings | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { dishes, settings, loading } = useDishesAndSettings()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [cart, setCart] = useState<Record<string, number>>({})
@@ -24,28 +23,6 @@ export default function Billing() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showCheckout, setShowCheckout] = useState(false)
-
-  useEffect(() => {
-    ;(async () => {
-      setLoading(true)
-      try {
-        const [freshDishes, freshSettings] = await Promise.all([api.getDishes(true), api.getSettings()])
-        setDishes(freshDishes)
-        setSettings(freshSettings)
-        await db.dishes.bulkPut(freshDishes)
-        await db.settings.put({ key: 'settings', value: freshSettings })
-      } catch {
-        const [cachedDishes, cachedSettings] = await Promise.all([
-          db.dishes.where('Active').equals('Y').toArray(),
-          db.settings.get('settings'),
-        ])
-        setDishes(cachedDishes)
-        setSettings(cachedSettings?.value ?? null)
-      } finally {
-        setLoading(false)
-      }
-    })()
-  }, [])
 
   const lineItems = useMemo(
     () =>
