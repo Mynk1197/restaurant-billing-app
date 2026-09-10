@@ -93,6 +93,7 @@ export interface Bill {
   sgstRate?: number
   cgstRate?: number
   status: 'Active' | 'Voided'
+  tableNumber?: string
   voidReason?: string
   voidedAt?: string
 }

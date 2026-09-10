@@ -157,7 +157,10 @@ export default function BillView() {
         </div>
 
         <div className="my-3 flex justify-between border-t border-dashed border-gray-200 pt-3 text-xs text-gray-500">
-          <span>Bill #{bill.billNo}</span>
+          <span>
+            Bill #{bill.billNo}
+            {bill.tableNumber && ` · Table ${bill.tableNumber}`}
+          </span>
           <span>{formatDateTime(bill.dateTime)}</span>
         </div>
         {bill.customerName && <p className="mb-2 text-xs text-gray-500">Customer: {bill.customerName}</p>}

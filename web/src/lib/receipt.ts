@@ -95,6 +95,9 @@ export function buildReceiptPdf(bill: Bill): jsPDF {
     y += 12
   }
   doc.text(`Receipt No.: ${bill.billNo}`, margin, y)
+  if (bill.tableNumber) {
+    doc.text(`Table : ${String(bill.tableNumber)}`, width - margin, y, { align: 'right' })
+  }
   y += 12
 
   y += 2

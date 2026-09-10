@@ -150,6 +150,7 @@ export default function History() {
             <div>
               <p className="text-sm font-semibold text-gray-800">
                 #{bill.billNo} · {bill.customerName || 'Walk-in'}
+                {bill.tableNumber && <span className="text-gray-400"> · Table {bill.tableNumber}</span>}
                 {bill.status === 'Voided' && (
                   <span className="ml-2 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-600">VOIDED</span>
                 )}

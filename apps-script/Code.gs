@@ -15,7 +15,7 @@ var SETTINGS_HEADERS = ['Key', 'Value'];
 var BILLS_HEADERS = [
   'BillNo', 'DateTime', 'CustomerName', 'CustomerPhone',
   'Subtotal', 'Discount', 'SGST', 'CGST', 'Total', 'PaymentMethod', 'ItemsJSON',
-  'Status', 'VoidReason', 'VoidedAt'
+  'Status', 'VoidReason', 'VoidedAt', 'TableNumber'
 ];
 // An open dine-in order (a "tab" for a table) -- rows here exist only while
 // a table's order is unfinished. Finalizing moves it into Bills and deletes
@@ -296,10 +296,13 @@ function createBill(params) {
     Total: total,
     PaymentMethod: params.paymentMethod || 'Cash',
     ItemsJSON: JSON.stringify(lineItems),
-    Status: 'Active'
+    Status: 'Active',
+    TableNumber: params.tableNumber || ''
   };
   appendRow(SHEET_BILLS, BILLS_HEADERS, bill);
-  forceCellAsText(SHEET_BILLS, BILLS_HEADERS, getSheet(SHEET_BILLS).getLastRow(), 'CustomerPhone', bill.CustomerPhone);
+  var billRowIdx = getSheet(SHEET_BILLS).getLastRow();
+  forceCellAsText(SHEET_BILLS, BILLS_HEADERS, billRowIdx, 'CustomerPhone', bill.CustomerPhone);
+  forceCellAsText(SHEET_BILLS, BILLS_HEADERS, billRowIdx, 'TableNumber', bill.TableNumber);
 
   return {
     billNo: billNo,
@@ -319,7 +322,7 @@ function createBill(params) {
     sgstRate: sgstRate,
     cgstRate: cgstRate,
     status: 'Active',
-    status: 'Active'
+    tableNumber: bill.TableNumber
   };
 }
 
@@ -352,7 +355,8 @@ function billRowToBill(row, settings) {
     phone: settings.Phone,
     status: billStatus(row),
     voidReason: row.VoidReason || '',
-    voidedAt: row.VoidedAt || ''
+    voidedAt: row.VoidedAt || '',
+    tableNumber: row.TableNumber || ''
   };
 }
 
@@ -495,7 +499,8 @@ function finalizeOrder(params) {
     customerPhone: order.CustomerPhone,
     items: order.ItemsJSON,
     discount: order.Discount,
-    paymentMethod: order.PaymentMethod
+    paymentMethod: order.PaymentMethod,
+    tableNumber: order.TableNumber
   });
   getSheet(SHEET_ORDERS).deleteRow(rowIdx);
   return bill;
