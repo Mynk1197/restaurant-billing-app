@@ -28,6 +28,12 @@ export default function TableOrder() {
   const [cancelling, setCancelling] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savingLabel, setSavingLabel] = useState<'idle' | 'saving' | 'saved'>('idle')
+  // Guards against tapping Back multiple times while the flush save is
+  // still in flight -- without this, each tap awaits its own
+  // flushPendingSave() and then calls navigate(-1), so several navigate(-1)
+  // calls end up queued and fire one after another once each resolves,
+  // walking back through history further than the single tap intended.
+  const leavingRef = useRef(false)
 
   useEffect(() => {
     if (!tableNumber) return
@@ -180,6 +186,8 @@ export default function TableOrder() {
       <div className="flex items-center justify-between">
         <button
           onClick={async () => {
+            if (leavingRef.current) return
+            leavingRef.current = true
             await flushPendingSave()
             navigate(-1)
           }}
