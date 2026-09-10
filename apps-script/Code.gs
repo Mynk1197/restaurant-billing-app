@@ -7,6 +7,7 @@ var SHEET_STAFF = 'Staff';
 var SHEET_DISHES = 'Dishes';
 var SHEET_SETTINGS = 'Settings';
 var SHEET_BILLS = 'Bills';
+var SHEET_ORDERS = 'Orders';
 
 var STAFF_HEADERS = ['Email', 'Name'];
 var DISHES_HEADERS = ['Id', 'Name', 'Category', 'Price', 'Active'];
@@ -16,6 +17,14 @@ var BILLS_HEADERS = [
   'Subtotal', 'Discount', 'SGST', 'CGST', 'Total', 'PaymentMethod', 'ItemsJSON',
   'Status', 'VoidReason', 'VoidedAt'
 ];
+// An open dine-in order (a "tab" for a table) -- rows here exist only while
+// a table's order is unfinished. Finalizing moves it into Bills and deletes
+// the row; cancelling just deletes the row. Presence in this sheet is what
+// "occupied" means, so there's no separate Status column.
+var ORDERS_HEADERS = [
+  'OrderId', 'TableNumber', 'CustomerName', 'CustomerPhone',
+  'PaymentMethod', 'Discount', 'ItemsJSON', 'UpdatedAt'
+];
 
 var DEFAULT_SETTINGS = {
   RestaurantName: 'My Restaurant',
@@ -23,7 +32,8 @@ var DEFAULT_SETTINGS = {
   Phone: '',
   SGSTRate: '2.5',
   CGSTRate: '2.5',
-  NextBillNumber: '1'
+  NextBillNumber: '1',
+  TableCount: '12'
 };
 
 function doGet(e) {
@@ -67,6 +77,21 @@ function handle(e) {
         break;
       case 'voidBill':
         result = voidBill(params);
+        break;
+      case 'getOpenOrders':
+        result = getOpenOrders();
+        break;
+      case 'getOrder':
+        result = getOrder(params);
+        break;
+      case 'saveOrder':
+        result = saveOrder(params);
+        break;
+      case 'cancelOrder':
+        result = cancelOrder(params);
+        break;
+      case 'finalizeOrder':
+        result = finalizeOrder(params);
         break;
       default:
         throw new Error('Unknown action: ' + action);
@@ -374,6 +399,108 @@ function voidBill(params) {
   return { billNo: params.billNo, status: 'Voided', voidReason: reason, voidedAt: voidedAt };
 }
 
+// ---------- Dine-in orders (tables) ----------
+
+function orderRowToOrder(row) {
+  return {
+    orderId: row.OrderId,
+    tableNumber: row.TableNumber,
+    customerName: row.CustomerName,
+    customerPhone: row.CustomerPhone,
+    paymentMethod: row.PaymentMethod,
+    discount: row.Discount,
+    items: JSON.parse(row.ItemsJSON || '[]'),
+    updatedAt: row.UpdatedAt
+  };
+}
+
+// Every open order at once, for the Tables grid to know which table numbers
+// are occupied.
+function getOpenOrders() {
+  var all = sheetToObjects(SHEET_ORDERS, ORDERS_HEADERS);
+  return all.map(orderRowToOrder);
+}
+
+function getOrder(params) {
+  var all = sheetToObjects(SHEET_ORDERS, ORDERS_HEADERS);
+  var found = null;
+  if (params.orderId) {
+    found = all.filter(function (o) { return String(o.OrderId) === String(params.orderId); })[0];
+  } else if (params.tableNumber) {
+    found = all.filter(function (o) { return String(o.TableNumber) === String(params.tableNumber); })[0];
+  }
+  return found ? orderRowToOrder(found) : null;
+}
+
+// Upserts a table's draft order -- called repeatedly (debounced client-side)
+// as items/customer/payment/discount change, so the current state of an
+// in-progress order is never lost and any device can see it. Reuses an
+// existing open order for the table if no orderId was given and one already
+// exists there, instead of creating a duplicate (guards a double-tap
+// starting the same table twice).
+function saveOrder(params) {
+  var sh = getSheet(SHEET_ORDERS);
+  var orderId = params.orderId;
+  var rowIdx = orderId ? findRowIndexByKey(SHEET_ORDERS, ORDERS_HEADERS, 'OrderId', orderId) : -1;
+  if (rowIdx < 0 && !orderId) {
+    rowIdx = findRowIndexByKey(SHEET_ORDERS, ORDERS_HEADERS, 'TableNumber', params.tableNumber);
+    if (rowIdx >= 0) orderId = String(sh.getRange(rowIdx, ORDERS_HEADERS.indexOf('OrderId') + 1).getValue());
+  }
+  if (!orderId) orderId = 'O' + new Date().getTime() + Math.floor(Math.random() * 1000);
+
+  var fields = {
+    OrderId: orderId,
+    TableNumber: params.tableNumber,
+    CustomerName: params.customerName || '',
+    CustomerPhone: params.customerPhone || '',
+    PaymentMethod: params.paymentMethod || 'Cash',
+    Discount: params.discount || '0',
+    ItemsJSON: params.items || '[]',
+    UpdatedAt: new Date().toISOString()
+  };
+
+  if (rowIdx < 0) {
+    appendRow(SHEET_ORDERS, ORDERS_HEADERS, fields);
+    rowIdx = sh.getLastRow();
+  } else {
+    ORDERS_HEADERS.forEach(function (h, i) {
+      sh.getRange(rowIdx, i + 1).setValue(fields[h]);
+    });
+  }
+  forceCellAsText(SHEET_ORDERS, ORDERS_HEADERS, rowIdx, 'CustomerPhone', fields.CustomerPhone);
+  forceCellAsText(SHEET_ORDERS, ORDERS_HEADERS, rowIdx, 'TableNumber', fields.TableNumber);
+  return { orderId: orderId };
+}
+
+// Frees a table without creating a bill -- e.g. an accidental tap, or a
+// guest who leaves without ordering.
+function cancelOrder(params) {
+  var rowIdx = findRowIndexByKey(SHEET_ORDERS, ORDERS_HEADERS, 'OrderId', params.orderId);
+  if (rowIdx < 0) throw new Error('Order not found');
+  getSheet(SHEET_ORDERS).deleteRow(rowIdx);
+  return { ok: true };
+}
+
+// Converts a table's draft order into a real bill (same createBill logic,
+// so totals/tax are computed the same way and it shows up in
+// History/Reports normally), then frees the table.
+function finalizeOrder(params) {
+  var rowIdx = findRowIndexByKey(SHEET_ORDERS, ORDERS_HEADERS, 'OrderId', params.orderId);
+  if (rowIdx < 0) throw new Error('Order not found');
+  var order = sheetToObjects(SHEET_ORDERS, ORDERS_HEADERS)[rowIdx - 2];
+  if (!order.ItemsJSON || order.ItemsJSON === '[]') throw new Error('Add at least one dish before finalizing.');
+
+  var bill = createBill({
+    customerName: order.CustomerName,
+    customerPhone: order.CustomerPhone,
+    items: order.ItemsJSON,
+    discount: order.Discount,
+    paymentMethod: order.PaymentMethod
+  });
+  getSheet(SHEET_ORDERS).deleteRow(rowIdx);
+  return bill;
+}
+
 function getReports(params) {
   var dateFrom = params.dateFrom;
   var dateTo = params.dateTo;
@@ -426,7 +553,8 @@ function setupSheets() {
     [SHEET_STAFF, STAFF_HEADERS],
     [SHEET_DISHES, DISHES_HEADERS],
     [SHEET_SETTINGS, SETTINGS_HEADERS],
-    [SHEET_BILLS, BILLS_HEADERS]
+    [SHEET_BILLS, BILLS_HEADERS],
+    [SHEET_ORDERS, ORDERS_HEADERS]
   ];
   defs.forEach(function (def) {
     var name = def[0], headers = def[1];
@@ -434,10 +562,17 @@ function setupSheets() {
     sh.getRange(1, 1, 1, headers.length).setValues([headers]);
   });
 
+  // Backfills any DEFAULT_SETTINGS key not already present (e.g. TableCount
+  // added after a Sheet was already set up), instead of only seeding
+  // defaults the very first time this runs.
   var settingsSheet = ss.getSheetByName(SHEET_SETTINGS);
-  if (settingsSheet.getLastRow() < 2) {
-    Object.keys(DEFAULT_SETTINGS).forEach(function (key) {
-      settingsSheet.appendRow([key, DEFAULT_SETTINGS[key]]);
+  var presentKeys = {};
+  if (settingsSheet.getLastRow() >= 2) {
+    settingsSheet.getRange(2, 1, settingsSheet.getLastRow() - 1, 1).getValues().forEach(function (row) {
+      if (row[0]) presentKeys[row[0]] = true;
     });
   }
+  Object.keys(DEFAULT_SETTINGS).forEach(function (key) {
+    if (!presentKeys[key]) settingsSheet.appendRow([key, DEFAULT_SETTINGS[key]]);
+  });
 }

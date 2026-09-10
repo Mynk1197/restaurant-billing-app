@@ -63,6 +63,7 @@ export interface Settings {
   SGSTRate: string
   CGSTRate: string
   NextBillNumber: string
+  TableCount: string
 }
 
 export interface BillLineItem {
@@ -94,6 +95,17 @@ export interface Bill {
   status: 'Active' | 'Voided'
   voidReason?: string
   voidedAt?: string
+}
+
+export interface Order {
+  orderId: string
+  tableNumber: string
+  customerName: string
+  customerPhone: string
+  paymentMethod: string
+  discount: number
+  items: BillLineItem[]
+  updatedAt: string
 }
 
 export interface Reports {
@@ -135,4 +147,27 @@ export const api = {
       billNo: String(billNo),
       reason,
     }),
+  getOpenOrders: () => call<Order[]>('getOpenOrders'),
+  getOrder: (idOrTable: { orderId?: string; tableNumber?: string }) =>
+    call<Order | null>('getOrder', { orderId: idOrTable.orderId ?? '', tableNumber: idOrTable.tableNumber ?? '' }),
+  saveOrder: (payload: {
+    orderId?: string
+    tableNumber: string
+    customerName: string
+    customerPhone: string
+    paymentMethod: string
+    discount: number
+    items: { dishId: string; name: string; category: string; price: number; qty: number }[]
+  }) =>
+    call<{ orderId: string }>('saveOrder', {
+      orderId: payload.orderId ?? '',
+      tableNumber: payload.tableNumber,
+      customerName: payload.customerName,
+      customerPhone: payload.customerPhone,
+      paymentMethod: payload.paymentMethod,
+      discount: String(payload.discount),
+      items: JSON.stringify(payload.items),
+    }),
+  cancelOrder: (orderId: string) => call<{ ok: boolean }>('cancelOrder', { orderId }),
+  finalizeOrder: (orderId: string) => call<Bill>('finalizeOrder', { orderId }),
 }

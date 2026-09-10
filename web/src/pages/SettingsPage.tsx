@@ -32,6 +32,10 @@ export default function SettingsPage() {
       setError('SGST and CGST rates are required (0 is fine, but they can’t be blank).')
       return
     }
+    if (!form.TableCount.trim() || Number(form.TableCount) < 1) {
+      setError('Number of tables must be at least 1.')
+      return
+    }
     setSaving(true)
     setError(null)
     setSaved(false)
@@ -112,6 +116,22 @@ export default function SettingsPage() {
             />
           </label>
         </div>
+      </div>
+
+      <div className="rounded-2xl bg-white p-4 shadow-sm">
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-400">Dine-in</h2>
+        <label className="text-xs text-gray-500">
+          Number of tables <span className="text-rose-500">*</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            value={form.TableCount}
+            onChange={(e) => update({ TableCount: e.target.value })}
+            disabled={saving}
+            className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-400"
+          />
+        </label>
       </div>
 
       <button

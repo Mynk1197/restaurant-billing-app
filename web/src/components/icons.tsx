@@ -140,3 +140,12 @@ export function IconArrowLeft({ className }: IconProps) {
     </svg>
   )
 }
+
+export function IconTable({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="6" width="18" height="4" rx="1" />
+      <path d="M6 10v8M18 10v8" />
+    </svg>
+  )
+}
