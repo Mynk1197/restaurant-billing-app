@@ -27,6 +27,19 @@ button {
   font-family: inherit;
 }
 
+/* Tailwind's reset sets buttons to cursor:default (only <a> tags get
+   pointer by default) -- on a mobile-first app this goes unnoticed since
+   touch has no cursor, but hovering any button on a desktop browser showed
+   no visual change at all. */
+button:not(:disabled),
+[role='button']:not(:disabled) {
+  cursor: pointer;
+}
+button:disabled,
+[role='button'][aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
 /* iOS Safari/Chrome auto-zoom the page on focus if an input's font size is
    under 16px -- overrides Tailwind's text-sm (14px) used on form fields
    throughout the app so focusing them doesn't trigger that zoom. */
