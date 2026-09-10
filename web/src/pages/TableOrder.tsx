@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api, type Dish, type Settings } from '../api/api'
 import { formatCurrency } from '../lib/format'
-import { IconArrowLeft, IconClose } from '../components/icons'
+import { IconArrowLeft } from '../components/icons'
 import Banner from '../components/Banner'
 import DishGrid from '../components/DishGrid'
 
@@ -159,6 +159,12 @@ export default function TableOrder() {
   async function handleCancelOrder() {
     setCancelling(true)
     setError(null)
+    // Stop the debounced autosave from firing after this and re-creating
+    // the very order row cancelOrder is about to delete.
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+      saveTimeoutRef.current = null
+    }
     try {
       if (orderId) await api.cancelOrder(orderId)
       navigate('/tables')
@@ -241,12 +247,11 @@ export default function TableOrder() {
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-bold text-gray-800">Finalize Table {tableNumber}</h3>
               <button
-                onClick={() => setShowCheckout(false)}
-                disabled={finalizing}
-                aria-label="Close"
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-gray-500 disabled:opacity-40"
+                onClick={handleCancelOrder}
+                disabled={finalizing || cancelling}
+                className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600 disabled:opacity-40"
               >
-                <IconClose className="h-4 w-4" />
+                {cancelling ? 'Discarding…' : 'Discard Order'}
               </button>
             </div>
             {error && (

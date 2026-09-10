@@ -4,7 +4,6 @@ import { api, type Dish, type Settings } from '../api/api'
 import { db } from '../db/db'
 import { notifyQueueChanged } from '../db/sync'
 import { formatCurrency } from '../lib/format'
-import { IconClose } from '../components/icons'
 import Banner from '../components/Banner'
 import DishGrid from '../components/DishGrid'
 
@@ -173,10 +172,9 @@ export default function Billing() {
                   setShowCheckout(false)
                 }}
                 disabled={submitting}
-                aria-label="Clear cart and close"
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-gray-500 disabled:opacity-40"
+                className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600 disabled:opacity-40"
               >
-                <IconClose className="h-4 w-4" />
+                Discard Bill
               </button>
             </div>
             {error && (
