@@ -15,22 +15,31 @@ body,
   height: 100%;
 }
 
-/* Pinning the app's own root div (App.tsx/Login.tsx, via fixed+inset-0)
-   wasn't enough on its own -- a gray strip (body's own background) was
-   still showing through below it in standalone iOS PWA mode, meaning even
-   <body> itself wasn't reliably reaching the real screen edges there.
-   Pinning body directly to the viewport is the standard fix for this
-   exact "stray bar at the bottom of an installed iOS PWA" class of bug. */
 body {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  overflow: hidden;
   margin: 0;
   font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
   background: #f3f4f6;
   color: #1f2937;
   overscroll-behavior-y: none;
+}
+
+/* Pinning the app's own root div (App.tsx/Login.tsx, via fixed+inset-0)
+   wasn't enough on its own -- a gray strip (body's own background) was
+   still showing through below it in standalone iOS PWA mode, meaning even
+   <body> itself wasn't reliably reaching the real screen edges there.
+   Pinning body directly to the viewport is the standard fix for that.
+   Scoped to display-mode:standalone specifically -- applying this
+   unconditionally broke Chrome's native pull-to-refresh in the regular
+   browser-tab version of the app, since that gesture relies on the
+   document itself being scrollable/overscroll-able at the top, which
+   position:fixed + overflow:hidden on body prevents entirely. */
+@media all and (display-mode: standalone) {
+  body {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    overflow: hidden;
+  }
 }
 
 button {
