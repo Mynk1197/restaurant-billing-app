@@ -35,7 +35,7 @@ export default function TopBar() {
     <header className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-sm">
       <div className="flex items-center gap-2">
         <LogoMark className="h-7 w-7" />
-        <span className="text-sm font-bold text-gray-800">Restaurant Billing</span>
+        <span className="text-sm font-bold text-gray-800">QuickTab</span>
       </div>
 
       <div className="flex items-center gap-2">

@@ -1,4 +1,4 @@
-# Restaurant Billing
+# QuickTab
 
 A fast restaurant billing PWA backed by Google Sheets (no database, no server to run). Staff pick dishes, the app computes SGST/CGST, saves the bill, and shares a PDF receipt straight to the customer's WhatsApp — no WhatsApp Business API required.
 
@@ -7,7 +7,7 @@ A fast restaurant billing PWA backed by Google Sheets (no database, no server to
 
 ## 1. Create the Google Sheet
 
-1. Create a new Google Sheet (e.g. "Restaurant Billing").
+1. Create a new Google Sheet (e.g. "QuickTab").
 2. Extensions → Apps Script.
 3. Delete the default `Code.gs` content and paste in the contents of `apps-script/Code.gs`.
 4. In the Apps Script editor, open `appsscript.json` (Project Settings → "Show appsscript.json") and replace it with `apps-script/appsscript.json`.

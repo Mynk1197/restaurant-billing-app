@@ -48,7 +48,7 @@ export default function Login() {
       <div className="relative flex flex-1 flex-col items-center justify-center gap-5">
         <LogoMark className="h-16 w-16 drop-shadow-lg" />
         <div>
-          <h1 className="text-2xl font-extrabold text-white">Restaurant Billing</h1>
+          <h1 className="text-2xl font-extrabold text-white">QuickTab</h1>
           <p className="mt-1 text-sm text-orange-200">Bills, tables, WhatsApp — sorted.</p>
         </div>
         <div className="relative w-full max-w-xs rounded-2xl bg-white p-5 shadow-xl">

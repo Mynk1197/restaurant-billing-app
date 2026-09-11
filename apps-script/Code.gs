@@ -1,5 +1,5 @@
 /**
- * Restaurant Billing backend. Bind this script to the billing Google Sheet.
+ * QuickTab backend. Bind this script to the billing Google Sheet.
  * Deploy: Deploy > New deployment > Web app > Execute as "Me", Access "Anyone".
  */
 

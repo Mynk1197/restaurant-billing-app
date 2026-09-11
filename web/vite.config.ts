@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Restaurant Billing',
-        short_name: 'Billing',
-        description: 'Fast restaurant billing with GST and WhatsApp bill sharing',
+        name: 'QuickTab',
+        short_name: 'QuickTab',
+        description: 'Bills, tables, WhatsApp — sorted.',
         theme_color: '#ea580c',
         background_color: '#ea580c',
         display: 'standalone',
