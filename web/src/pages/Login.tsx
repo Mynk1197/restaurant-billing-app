@@ -22,7 +22,10 @@ export default function Login() {
   const online = useOnlineStatus()
 
   return (
-    <div className="relative flex h-[100dvh] flex-col items-center overflow-hidden bg-slate-900 px-6 text-center">
+    <div
+      className="relative flex flex-col items-center overflow-hidden bg-slate-900 px-6 text-center"
+      style={{ height: 'var(--app-height, 100dvh)' }}
+    >
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 bg-linear-to-b from-slate-900 via-orange-950 to-orange-900" />
         <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-orange-500/25 blur-3xl" />

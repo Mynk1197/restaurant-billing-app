@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom'
 import { useAuth, AuthProvider } from './auth/AuthContext'
+import { useViewportHeight } from './hooks/useViewportHeight'
 import TopBar from './components/TopBar'
 import BottomNav from './components/BottomNav'
 import Login from './pages/Login'
@@ -46,6 +47,7 @@ function AppRoutes() {
 
 function Shell() {
   const { staff, loading } = useAuth()
+  useViewportHeight()
 
   if (loading) {
     return (
@@ -58,14 +60,21 @@ function Shell() {
 
   return (
     <BrowserRouter>
-      {/* h-[100dvh] (not min-h-screen) is required for <main>'s flex-1 to get
-          an actual bounded height -- otherwise the container just grows
-          past the viewport instead of clipping, overflow-y-auto never
-          engages, the page itself scrolls instead, and position:sticky
-          inside <main> breaks (it sticks relative to a box that never
-          actually scrolls internally, so it just scrolls away with
-          everything else). */}
-      <div className="mx-auto flex h-[100dvh] max-w-md flex-col bg-slate-50">
+      {/* A bounded height here (not min-h-screen) is required for <main>'s
+          flex-1 to get an actual bounded height -- otherwise the container
+          just grows past the viewport instead of clipping, overflow-y-auto
+          never engages, the page itself scrolls instead, and
+          position:sticky inside <main> breaks (it sticks relative to a box
+          that never actually scrolls internally, so it just scrolls away
+          with everything else). --app-height (set via useViewportHeight,
+          from the real window.innerHeight) is used over 100dvh because
+          iOS's WebKit doesn't reliably resolve dvh inside an installed PWA,
+          which left a blank gap at the bottom of the screen; 100dvh is kept
+          only as the fallback before that effect has run once. */}
+      <div
+        className="mx-auto flex max-w-md flex-col bg-slate-50"
+        style={{ height: 'var(--app-height, 100dvh)' }}
+      >
         <TopBar />
         <main className="flex-1 overflow-y-auto pb-4">
           <AppRoutes />
