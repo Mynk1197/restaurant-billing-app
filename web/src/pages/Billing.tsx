@@ -111,9 +111,16 @@ export default function Billing() {
       {/* Always pinned just above BottomNav, regardless of how tall the dish
           list is -- position:sticky on this same element only "stuck" once
           scrolled that far, so with a short list it just floated wherever
-          it naturally landed instead of staying anchored to the bottom. */}
+          it naturally landed instead of staying anchored to the bottom.
+          A flat bottom-16 (BottomNav's base height) left this tucked
+          partially behind BottomNav on iPhones with a home indicator,
+          since BottomNav itself grows taller there for that safe area --
+          adding it here too keeps this clear of BottomNav's real height. */}
       {lineItems.length > 0 && !showCheckout && (
-        <div className="fixed inset-x-0 bottom-16 z-10 mx-auto max-w-md px-4">
+        <div
+          className="fixed inset-x-0 z-10 mx-auto max-w-md px-4"
+          style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}
+        >
           <button
             onClick={() => {
               setError(null)

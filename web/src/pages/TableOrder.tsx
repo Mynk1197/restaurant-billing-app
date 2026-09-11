@@ -217,7 +217,10 @@ export default function TableOrder() {
       />
 
       {lineItems.length > 0 && !showCheckout && (
-        <div className="fixed inset-x-0 bottom-16 z-10 mx-auto max-w-md px-4">
+        <div
+          className="fixed inset-x-0 z-10 mx-auto max-w-md px-4"
+          style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}
+        >
           <button
             onClick={() => {
               setError(null)
