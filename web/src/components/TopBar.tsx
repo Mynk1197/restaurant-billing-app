@@ -29,7 +29,10 @@ export default function TopBar() {
   }, [])
 
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-sm">
+    <header
+      className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white/95 px-4 pb-3 backdrop-blur-sm"
+      style={{ paddingTop: 'max(env(safe-area-inset-top), 0.75rem)' }}
+    >
       <div className="flex items-center gap-2">
         <LogoMark className="h-7 w-7" />
         <span className="text-sm font-bold text-gray-800">Restaurant Billing</span>

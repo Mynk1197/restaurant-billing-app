@@ -24,7 +24,7 @@ export default function Login() {
   return (
     <div
       className="relative flex flex-col items-center overflow-hidden bg-slate-900 px-6 text-center"
-      style={{ height: 'var(--app-height, 100dvh)' }}
+      style={{ height: 'var(--app-height, 100dvh)', paddingTop: 'env(safe-area-inset-top)' }}
     >
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 bg-linear-to-b from-slate-900 via-orange-950 to-orange-900" />

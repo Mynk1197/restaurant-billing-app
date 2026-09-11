@@ -8,13 +8,14 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <!-- "black-translucent" overlays a transparent status bar on top of the
-         page content instead of reserving space for it, which requires
-         manually padding for safe-area-inset-top everywhere -- nothing in
-         this app does that, so it caused every header to sit underneath
-         the iPhone's status bar (time/battery). "default" makes iOS
-         reserve its own space instead, avoiding that without needing any
-         safe-area padding. -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+         page content instead of reserving space for it -- with "default"
+         instead, iOS reserves that space with its own plain background
+         (usually white), which looks wrong on the dark/orange Login screen
+         and clashes with its gradient reaching the top edge. Using
+         translucent again, but now with safe-area-inset-top padding added
+         to TopBar and Login so content doesn't sit underneath the status
+         bar icons like it did before that padding existed. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#ea580c" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
