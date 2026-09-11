@@ -9,17 +9,21 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Restaurant Billing',
         short_name: 'Billing',
         description: 'Fast restaurant billing with GST and WhatsApp bill sharing',
         theme_color: '#ea580c',
-        background_color: '#ffffff',
+        background_color: '#ea580c',
         display: 'standalone',
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          // 'any maskable' tells Android it's safe to crop this to a
+          // circle/squircle for adaptive icons -- the fork/knife glyph has
+          // enough padding from the edge to survive that crop.
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
         ],
       },
     }),
