@@ -26,10 +26,9 @@ export default function Login() {
     // neither 100dvh nor a JS-measured window.innerHeight reliably covered
     // the full screen in this app's installed-on-iOS-home-screen mode,
     // leaving a gap at the bottom. See the same fix in App.tsx's Shell.
-    <div
-      className="fixed inset-0 flex flex-col items-center overflow-hidden bg-slate-900 px-6 text-center"
-      style={{ paddingTop: 'env(safe-area-inset-top)' }}
-    >
+    // No safe-area-inset-top padding needed -- status-bar-style is
+    // "default", so iOS already reserves that space itself.
+    <div className="fixed inset-0 flex flex-col items-center overflow-hidden bg-slate-900 px-6 text-center">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 bg-linear-to-b from-slate-900 via-orange-950 to-orange-900" />
         <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-orange-500/25 blur-3xl" />

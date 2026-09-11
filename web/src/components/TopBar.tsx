@@ -29,10 +29,10 @@ export default function TopBar() {
   }, [])
 
   return (
-    <header
-      className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white/95 px-4 pb-3 backdrop-blur-sm"
-      style={{ paddingTop: 'max(env(safe-area-inset-top), 0.75rem)' }}
-    >
+    // No safe-area-inset-top padding needed here -- status-bar-style is
+    // "default", so iOS already reserves that space itself; adding our own
+    // on top of that would double the gap instead of fixing anything.
+    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-sm">
       <div className="flex items-center gap-2">
         <LogoMark className="h-7 w-7" />
         <span className="text-sm font-bold text-gray-800">Restaurant Billing</span>
