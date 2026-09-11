@@ -15,7 +15,17 @@ body,
   height: 100%;
 }
 
+/* Pinning the app's own root div (App.tsx/Login.tsx, via fixed+inset-0)
+   wasn't enough on its own -- a gray strip (body's own background) was
+   still showing through below it in standalone iOS PWA mode, meaning even
+   <body> itself wasn't reliably reaching the real screen edges there.
+   Pinning body directly to the viewport is the standard fix for this
+   exact "stray bar at the bottom of an installed iOS PWA" class of bug. */
 body {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  overflow: hidden;
   margin: 0;
   font-family: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
   background: #f3f4f6;
