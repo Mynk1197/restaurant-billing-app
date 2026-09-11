@@ -205,11 +205,15 @@ export default function TableOrder() {
 
       {error && !showCheckout && <Banner tone="error">{error}</Banner>}
 
+      {/* Gated on orderRestored too, not just dishes/settings loading --
+          otherwise the grid was interactive before the existing order's
+          items arrived, and a tap made in that window got silently
+          overwritten once restore's setCart() replaced the whole cart. */}
       <DishGrid
         dishes={dishes}
         cart={cart}
         onAdjustQty={adjustQty}
-        loading={loading}
+        loading={loading || !orderRestored}
         search={search}
         onSearchChange={setSearch}
         categoryFilter={categoryFilter}
